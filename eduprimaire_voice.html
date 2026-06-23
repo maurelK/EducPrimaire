@@ -152,7 +152,7 @@
   .choice-btn:active { transform: translateY(2px); box-shadow: none; }
   .choice-btn .choice-sound { font-size: 11px; opacity: 0.5; }
   .choice-btn.correct { background: #D4EDDA; border-color: var(--leaf); animation: pop-correct 0.4s cubic-bezier(.34,1.56,.64,1); }
-  .choice-btn.wrong { background: #F8D7DA; border-color: var(--coral); animation: shake 0.4s; }
+  .choice-btn.wrong { background: rgba(199,125,255,0.15); border-color: var(--purple); animation: shake 0.4s; }
   @keyframes pop-correct { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
   @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
@@ -184,7 +184,7 @@
   /* ── FEEDBACK ── */
   .feedback-box { border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; display: none; animation: slide-up 0.3s ease; }
   .feedback-box.ok { background: #D4EDDA; color: #155724; display: block; }
-  .feedback-box.ko { background: #F8D7DA; color: #721c24; display: block; }
+  .feedback-box.ko { background: rgba(199,125,255,0.15); color: #5b21b6; display: block; border-left: 4px solid var(--purple); }
   .feedback-icon { font-size: 18px; margin-bottom: 3px; }
   .feedback-text { font-weight: 700; font-size: 14px; }
   .feedback-expl { font-size: 13px; margin-top: 2px; }
@@ -586,8 +586,8 @@
   }
   @keyframes encercle-pop { 0%{transform:scale(1)} 50%{transform:scale(1.14)} 100%{transform:scale(1)} }
   .entourer-item.ev-ok { border-color:var(--leaf); background:rgba(107,203,119,0.18); }
-  .entourer-item.ev-miss { border-color:var(--coral); background:rgba(255,107,107,0.12); animation:shake 0.4s; }
-  .entourer-item.ev-wrong { border-color:var(--coral); background:rgba(255,107,107,0.12); }
+  .entourer-item.ev-miss { border-color:var(--purple); background:rgba(199,125,255,0.12); animation:shake 0.4s; }
+  .entourer-item.ev-wrong { border-color:var(--purple); background:rgba(199,125,255,0.12); }
   .entourer-label { font-family:'Baloo 2',cursive; font-size:20px; font-weight:700; color:var(--navy); line-height:1; }
   .entourer-sub { font-size:9px; color:#AAA; text-align:center; line-height:1.2; }
   .entourer-validate { width:100%; padding:14px; background:var(--sky); color:var(--navy); border:none; border-radius:16px; font-family:'Baloo 2',cursive; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #2aada4; }
@@ -761,7 +761,7 @@
   }
   .comp-btn:active { background:rgba(78,205,196,0.1); }
   .comp-btn.correct { background:rgba(107,203,119,0.15); border-color:var(--leaf); color:var(--leaf); }
-  .comp-btn.wrong { background:rgba(255,107,107,0.12); border-color:#FF6B6B; color:#cc3333; }
+  .comp-btn.wrong { background:rgba(199,125,255,0.12); border-color:var(--purple); color:#7c3aed; }
   .reader-next-btn {
     width:100%; padding:16px; background:var(--sky); color:var(--navy); border:none;
     border-radius:18px; font-family:'Baloo 2',cursive; font-size:17px; font-weight:900;
@@ -1008,7 +1008,7 @@
 <!-- STICKER REWARD OVERLAY -->
 <div id="sticker-overlay">
   <div class="sticker-popup">
-    <span class="sticker-big" id="sticker-big">🥭</span>
+    <div class="sticker-big" id="sticker-big">🥭</div>
     <div class="sticker-title" id="sticker-name">La mangue d'or</div>
     <div class="sticker-desc" id="sticker-desc">Pour avoir bien répondu !</div>
     <button class="sticker-close" onclick="closeStickerOverlay()">Super ! 🎉</button>
@@ -1630,12 +1630,23 @@ function _startInlineTrace(letter) {
   }
   const drawn=new Set();
   let drawing=false,lastP=null;
-  function gp(e){const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(W/r.width),y:(s.clientY-r.top)*(H/r.height)};}
+  function gp(e){
+    const rect=canvas.getBoundingClientRect();
+    const src=(e.touches&&e.touches.length)?e.touches[0]:(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e;
+    return{x:(src.clientX-rect.left)*(W/rect.width), y:(src.clientY-rect.top)*(H/rect.height)};
+  }
   function mk(x,y){const c=Math.floor(x/cW),r=Math.floor(y/cH);[[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([dc,dr])=>{const cc=c+dc,rr=r+dr;if(cc>=0&&cc<GRID&&rr>=0&&rr<GRID)drawn.add(rr*GRID+cc);});}
-  function st(x,y){ctx.beginPath();if(lastP){ctx.moveTo(lastP.x,lastP.y);ctx.lineTo(x,y);}else{ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();}ctx.strokeStyle='rgba(78,205,196,0.8)';ctx.lineWidth=22;ctx.lineCap='round';ctx.stroke();lastP={x,y};mk(x,y);_updateInlineProg(targets,drawn);}
-  canvas.onmousedown=canvas.ontouchstart=(e)=>{e.preventDefault();drawing=true;lastP=null;st(...Object.values(gp(e)));};
-  canvas.onmousemove=canvas.ontouchmove=(e)=>{e.preventDefault();if(drawing)st(...Object.values(gp(e)));};
-  canvas.onmouseup=canvas.ontouchend=(e)=>{e.preventDefault();drawing=false;lastP=null;};
+  function st(x,y){ctx.beginPath();if(lastP){ctx.moveTo(lastP.x,lastP.y);ctx.lineTo(x,y);}else{ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();}ctx.strokeStyle='rgba(78,205,196,0.85)';ctx.lineWidth=24;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();lastP={x,y};mk(x,y);_updateInlineProg(targets,drawn);}
+  const down=(e)=>{e.preventDefault();drawing=true;lastP=null;const p=gp(e);st(p.x,p.y);};
+  const move=(e)=>{e.preventDefault();if(drawing){const p=gp(e);st(p.x,p.y);}};
+  const up=(e)=>{e.preventDefault();drawing=false;lastP=null;};
+  canvas.addEventListener('mousedown',down,{passive:false});
+  canvas.addEventListener('mousemove',move,{passive:false});
+  canvas.addEventListener('mouseup',up,{passive:false});
+  canvas.addEventListener('touchstart',down,{passive:false});
+  canvas.addEventListener('touchmove',move,{passive:false});
+  canvas.addEventListener('touchend',up,{passive:false});
+  canvas.addEventListener('touchcancel',up,{passive:false});
   _inlineTraceState={ctx,W,H,GRID,cW,cH,targets,drawn,letter};
 }
 function _updateInlineProg(targets,drawn) {
@@ -1666,7 +1677,7 @@ function renderRelierExercise(ex, grid) {
   const pairs = ex.pairs;
   // Mélanger la colonne droite
   const rightIdx = [...Array(pairs.length).keys()].sort(() => Math.random()-.5);
-  const COLORS = ['#FF6B6B','#4ECDC4','#C77DFF','#FFE66D','#6BCB77'];
+  const COLORS = ['#C77DFF','#4ECDC4','#FFE66D','#6BCB77','#FF9F43'];
   _relierState = { pairs, rightIdx, paired: new Map(), selected: null, colors: COLORS };
 
   const sec = document.getElementById('trace-section');
@@ -2196,33 +2207,41 @@ function playJingle(type) {
 // ══════════════════════════════════════════════════
 
 const STICKERS = [
-  {e:'🥭', n:"La mangue d'or",    d:'Pour avoir bien répondu !'},
-  {e:'🌴', n:'Le baobab fort',     d:'Solide comme un arbre !'},
-  {e:'🥁', n:'Le tam-tam',         d:'Ton rythme est parfait !'},
-  {e:'🦁', n:'Le lion courageux',  d:"Tu n'as pas eu peur !"},
-  {e:'🌺', n:'Fleur de Cotonou',   d:"Tu t'épanouis !"},
-  {e:'⚽', n:'Le ballon champion', d:'En plein dans le mille !'},
-  {e:'🐘', n:"L'éléphant sage",    d:'Bonne mémoire !'},
-  {e:'🌊', n:'La vague de Ouidah', d:'Tu avances bien !'},
-  {e:'🎋', n:'Le bambou fort',     d:'Tu grandis vite !'},
-  {e:'🏺', n:'Le canari de maman', d:'Précieux comme toi !'},
-  {e:'✨', n:"L'étoile brillante", d:'Tu brilles !'},
-  {e:'🎯', n:'La cible atteinte',  d:'Objectif accompli !'},
+  {img:'lec01', e:'🍍', n:'Lola et l\'olive',       d:'Tu maîtrises les lettres a, o, l !'},
+  {img:'lec02', e:'🚲', n:'Ali et son vélo',         d:'Bravo pour le, la, l\' !'},
+  {img:'lec03', e:'👗', n:'La belle jupe',            d:'Tu as appris e, u, j !'},
+  {img:'lec04', e:'📺', n:'Toni regarde la télé',    d:'Excellent travail sur é, i, t !'},
+  {img:'lec05', e:'🦴', n:'La tête de l\'âne',       d:'Tu gravis les sommets !'},
+  {img:'lec06', e:'🛵', n:'La moto de papa',          d:'Tu avances vite !'},
+  {img:'lec07', e:'🍌', n:'Lola et la banane',       d:'Bravo pour b et d !'},
+  {img:'lec08', e:'🐓', n:'Le coq pique le mil',     d:'Précis comme un coq !'},
+  {img:'lec09', e:'🥗', n:'La salade de maman',      d:'Tu brilles en lecture !'},
+  {img:'lec10', e:'🚲', n:'Fèmi pédale vite',        d:'Tu grandis comme Fèmi !'},
+  {img:'lec11', e:'🥥', n:'Toni au képi',            d:'Champion du calcul !'},
+  {img:'lec12', e:'🎸', n:'La guitare de Fèmi',      d:'Tu es une star !'},
+  {img:'lec13', e:'🦓', n:'Wabi au zoo',             d:'Curieux et courageux !'},
+  {img:'lec14', e:'🥁', n:'Le tam-tam de Fèmi',      d:'Ton rythme est parfait !'},
 ];
+
+function _stickerThumb(s, size=80) {
+  const src = (s.img && typeof LEC_IMAGES !== 'undefined') ? LEC_IMAGES[s.img] : null;
+  if (src) return `<img src="${src}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:50%;border:4px solid gold;display:block;margin:0 auto">`;
+  return `<span style="font-size:${size*0.9}px;line-height:1">${s.e}</span>`;
+}
 
 function earnSticker(pct) {
   if (pct < 60) return;
   const earned = new Set(student.stickers || []);
-  const avail = STICKERS.filter(s => !earned.has(s.e));
+  const avail = STICKERS.filter(s => !earned.has(s.img || s.e));
   if (!avail.length) return;
   const s = avail[Math.floor(Math.random() * avail.length)];
-  student.stickers = [...(student.stickers || []), s.e];
-  document.getElementById('sticker-big').textContent = s.e;
+  student.stickers = [...(student.stickers || []), s.img || s.e];
+  document.getElementById('sticker-big').innerHTML = _stickerThumb(s, 90);
   document.getElementById('sticker-name').textContent = s.n;
   document.getElementById('sticker-desc').textContent = s.d;
   document.getElementById('sticker-overlay').classList.add('show');
   playJingle('star');
-  if (voiceEnabled) setTimeout(() => speak('Bravo ! Tu as gagné ' + s.n + ' !'), 400);
+  if (voiceEnabled) setTimeout(() => speak('Bravo ! Tu as gagné le sticker ' + s.n + ' !'), 400);
   refreshStickerBoard();
 }
 
@@ -2236,7 +2255,14 @@ function refreshStickerBoard() {
   const stickers = student.stickers || [];
   if (!stickers.length) { el.style.display='none'; sec.style.display='none'; return; }
   el.style.display='flex'; sec.style.display='block';
-  el.innerHTML = stickers.map(e => `<div class="sticker-chip">${e}</div>`).join('');
+  el.innerHTML = stickers.map(key => {
+    const s = STICKERS.find(st => (st.img||st.e) === key) || {e: key};
+    const src = (s.img && typeof LEC_IMAGES !== 'undefined') ? LEC_IMAGES[s.img] : null;
+    if (src) {
+      return `<div class="sticker-chip" title="${s.n||''}"><img src="${src}" style="width:36px;height:36px;object-fit:cover;border-radius:50%"></div>`;
+    }
+    return `<div class="sticker-chip">${s.e||key}</div>`;
+  }).join('');
 }
 
 function openStickerBoard() {
@@ -2402,7 +2428,7 @@ function _initTrace(letter) {
 
   function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
+    const src = (e.touches&&e.touches.length)?e.touches[0]:(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e;
     return { x:(src.clientX-rect.left)*(W/rect.width), y:(src.clientY-rect.top)*(H/rect.height) };
   }
   function mark(x, y) {
@@ -2422,9 +2448,16 @@ function _initTrace(letter) {
     lastPt={x,y}; mark(x,y);
   }
 
-  canvas.onmousedown=canvas.ontouchstart=(e)=>{e.preventDefault();drawing=true;lastPt=null;stroke(...Object.values(getPos(e)));};
-  canvas.onmousemove=canvas.ontouchmove=(e)=>{e.preventDefault();if(drawing)stroke(...Object.values(getPos(e)));};
-  canvas.onmouseup=canvas.ontouchend=(e)=>{e.preventDefault();drawing=false;lastPt=null;};
+  const _td=(e)=>{e.preventDefault();drawing=true;lastPt=null;const p=getPos(e);stroke(p.x,p.y);};
+  const _tm=(e)=>{e.preventDefault();if(drawing){const p=getPos(e);stroke(p.x,p.y);}};
+  const _tu=(e)=>{e.preventDefault();drawing=false;lastPt=null;};
+  canvas.addEventListener('mousedown',_td,{passive:false});
+  canvas.addEventListener('mousemove',_tm,{passive:false});
+  canvas.addEventListener('mouseup',_tu,{passive:false});
+  canvas.addEventListener('touchstart',_td,{passive:false});
+  canvas.addEventListener('touchmove',_tm,{passive:false});
+  canvas.addEventListener('touchend',_tu,{passive:false});
+  canvas.addEventListener('touchcancel',_tu,{passive:false});
   _traceState = {ctx, W, H, GRID, cW, cH, targets, drawn, letter};
 }
 
