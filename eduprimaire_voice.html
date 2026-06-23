@@ -576,39 +576,33 @@
   .relier-dot { width:8px; height:8px; border-radius:50%; background:#E0E0E0; }
 
   /* ══ ENTOURER ══ */
-  .entourer-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:12px; }
+  .entourer-wrap { position:relative; user-select:none; -webkit-user-select:none; }
+  .entourer-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:0; }
   .entourer-item {
-    border-radius:50%;
-    border:4px solid #E8E8E8;
-    padding:12px 6px; cursor:pointer; text-align:center;
-    transition:all 0.22s cubic-bezier(.34,1.56,.64,1); background:white;
+    border-radius:50%; border:4px solid #E8E8E8;
+    padding:12px 6px; text-align:center; pointer-events:none;
+    transition:border-color 0.2s, box-shadow 0.2s, transform 0.2s; background:white;
     box-shadow:0 3px 8px rgba(0,0,0,0.08);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    min-height:80px; aspect-ratio:1; position:relative;
+    min-height:80px; aspect-ratio:1;
   }
-  .entourer-item:hover { transform:scale(1.06); border-color:rgba(78,205,196,0.4); }
+  #ent-canvas {
+    position:absolute; inset:0; width:100%; height:100%;
+    touch-action:none; cursor:crosshair; border-radius:12px;
+  }
+  .ent-hint { text-align:center; font-size:13px; color:#888; margin:10px 0 6px; }
   .entourer-item.encercle {
-    /* Anneau de cahier : double ring turquoise, comme tracé au crayon */
     border:5px solid var(--sky);
-    box-shadow:
-      0 0 0 4px white,
-      0 0 0 8px var(--sky),
-      0 0 0 10px rgba(78,205,196,0.25),
-      0 4px 14px rgba(78,205,196,0.3);
-    background:rgba(78,205,196,0.07);
-    transform:scale(1.1) rotate(-2deg);
-    animation:encercle-pop 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+    box-shadow: 0 0 0 4px white, 0 0 0 8px var(--sky), 0 0 0 10px rgba(78,205,196,0.25);
+    background:rgba(78,205,196,0.07); transform:scale(1.06) rotate(-1deg);
   }
   @keyframes encercle-pop {
-    0%   { transform:scale(1) rotate(0deg); }
-    40%  { transform:scale(1.16) rotate(-3deg); }
-    70%  { transform:scale(1.08) rotate(1deg); }
-    100% { transform:scale(1.1) rotate(-2deg); }
+    0%{transform:scale(1)} 50%{transform:scale(1.14) rotate(-3deg)} 100%{transform:scale(1.06) rotate(-1deg)}
   }
   .entourer-item.ev-ok {
     border:5px solid var(--leaf);
-    box-shadow: 0 0 0 4px white, 0 0 0 8px var(--leaf), 0 0 0 10px rgba(107,203,119,0.25);
-    background:rgba(107,203,119,0.1); transform:scale(1.08) rotate(-1deg);
+    box-shadow: 0 0 0 4px white, 0 0 0 8px var(--leaf);
+    background:rgba(107,203,119,0.1); transform:scale(1.06) rotate(-1deg);
   }
   .entourer-item.ev-miss {
     border:4px solid var(--purple);
@@ -992,7 +986,7 @@
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button class="nav-item active" id="nav-home" onclick="navGoHome()"><span class="nav-icon"></span><span class="nav-label">Accueil</span></button>
-  <button class="nav-item" id="nav-lecture" onclick="openLectureView()"><span class="nav-icon"></span><span class="nav-label">Lecture</span></button>
+  <button class="nav-item" id="nav-lecture" onclick="openLectureView()"><span class="nav-icon">📖</span><span class="nav-label">Lecture</span></button>
   <button class="nav-item" id="nav-alpha" onclick="openAlphaView()"><span class="nav-icon">🔤</span><span class="nav-label">Alphabet</span></button>
   <button class="nav-item" id="nav-stickers" onclick="openStickerBoard()"><span class="nav-icon">🎖</span><span class="nav-label">Stickers</span></button>
   <button class="nav-item" id="nav-stats" onclick="openStatsView()"><span class="nav-icon"></span><span class="nav-label">Progrès</span></button>
@@ -1395,9 +1389,8 @@ function hideWelcome() {
   setTimeout(() => {
     overlay.classList.remove('show', 'hide');
     overlay.style.display = 'none';
-    // Bouton Lecture visible uniquement pour CP
-    const navLec = document.getElementById('nav-lecture');
-    if (navLec) navLec.style.display = student.classe === 'CP' ? '' : 'none';
+    // Lecture visible pour tous (CP prioritaire, CI peut découvrir)
+    // pas de masquage
     document.getElementById('home-view').style.display = 'block';
     setActiveNav('nav-home');
     selectSubject('francais');
@@ -1766,43 +1759,150 @@ function _relierValidate() {
 
 // ─── ENTOURER ─────────────────────────────────────
 let _entourerState = null;
+
 function renderEntourerExercise(ex, grid) {
   grid.style.display = 'none';
   const items = ex.items;
-  _entourerState = { items, selected: new Set() };
+  _entourerState = { items, selected: new Set(), validated: false };
 
   const sec = document.getElementById('trace-section');
   sec.style.display = 'block';
   sec.innerHTML = `
-    <div class="entourer-grid">
-      ${items.map((it,i) => `
-        <div class="entourer-item" id="ei${i}" onclick="_entourerToggle(${i})">
-          <span class="entourer-label">${it.label}</span>
-          ${it.sublabel ? `<span class="entourer-sub">${it.sublabel}</span>` : ''}
-        </div>`).join('')}
+    <div class="entourer-wrap" id="ent-wrap">
+      <div class="entourer-grid" id="ent-grid">
+        ${items.map((it,i) => `
+          <div class="entourer-item" id="ei${i}">
+            <span class="entourer-label">${it.label}</span>
+            ${it.sublabel ? `<span class="entourer-sub">${it.sublabel}</span>` : ''}
+          </div>`).join('')}
+      </div>
+      <canvas id="ent-canvas"></canvas>
     </div>
-    <button class="entourer-validate" onclick="_entourerValidate()">✓ Valider</button>
+    <p class="ent-hint">✏️ Trace un cercle autour de ce que tu veux entourer</p>
+    <button class="entourer-validate" id="ent-val" onclick="_entourerValidate()" style="display:none">✓ Valider</button>
   `;
+  // Init canvas après le paint DOM
+  requestAnimationFrame(() => requestAnimationFrame(() => _initEntourerCanvas()));
 }
-function _entourerToggle(i) {
-  const {selected}=_entourerState;
-  const el=document.getElementById('ei'+i);
-  if(selected.has(i)){selected.delete(i);el.classList.remove('encercle');}
-  else{selected.add(i);el.classList.add('encercle');playJingle('correct');}
+
+function _initEntourerCanvas() {
+  const canvas = document.getElementById('ent-canvas');
+  const wrap   = document.getElementById('ent-wrap');
+  if (!canvas || !wrap) return;
+
+  // Ajuster la taille du canvas à celle du conteneur
+  const rect = wrap.getBoundingClientRect();
+  canvas.width  = Math.round(rect.width);
+  canvas.height = Math.round(rect.height);
+
+  const ctx = canvas.getContext('2d');
+  let drawing = false, path = [];
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const s = (e.touches && e.touches.length) ? e.touches[0]
+            : (e.changedTouches && e.changedTouches.length) ? e.changedTouches[0] : e;
+    return { x: (s.clientX - r.left) * (canvas.width / r.width),
+             y: (s.clientY - r.top)  * (canvas.height / r.height) };
+  }
+
+  function redraw(alpha) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (path.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    path.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.strokeStyle = `rgba(78,205,196,${alpha * 0.9})`;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.fillStyle = `rgba(78,205,196,${alpha * 0.08})`;
+    ctx.fill();
+  }
+
+  function fadeOut() {
+    let a = 1;
+    const tick = () => {
+      a -= 0.06;
+      if (a <= 0) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+      redraw(a);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function detectEncircled() {
+    if (path.length < 4) { path = []; return; }
+    // Construire un Path2D fermé
+    const p2d = new Path2D();
+    p2d.moveTo(path[0].x, path[0].y);
+    path.forEach(p => p2d.lineTo(p.x, p.y));
+    p2d.closePath();
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const canvRect = canvas.getBoundingClientRect();
+    let hit = false;
+
+    document.querySelectorAll('.entourer-item').forEach((el, i) => {
+      if (_entourerState.validated) return;
+      const r = el.getBoundingClientRect();
+      // Centre de l'item en coordonnées canvas
+      const cx = (r.left + r.width/2  - canvRect.left) * (canvas.width  / canvRect.width);
+      const cy = (r.top  + r.height/2 - canvRect.top)  * (canvas.height / canvRect.height);
+      if (ctx.isPointInPath(p2d, cx, cy)) {
+        _entourerState.selected.add(i);
+        el.classList.add('encercle');
+        el.style.animation = 'encercle-pop 0.35s cubic-bezier(.34,1.56,.64,1) forwards';
+        hit = true;
+      }
+    });
+
+    if (hit) playJingle('correct');
+    fadeOut();
+    path = [];
+    if (_entourerState.selected.size > 0) {
+      document.getElementById('ent-val').style.display = 'block';
+    }
+  }
+
+  const onDown = (e) => { e.preventDefault(); drawing = true; path = [pos(e)]; };
+  const onMove = (e) => { e.preventDefault(); if (drawing) { path.push(pos(e)); redraw(1); } };
+  const onUp   = (e) => { e.preventDefault(); if (drawing) { drawing = false; detectEncircled(); } };
+  const onCancel = (e) => { drawing = false; fadeOut(); path = []; };
+
+  canvas.addEventListener('mousedown',   onDown,   {passive:false});
+  canvas.addEventListener('mousemove',   onMove,   {passive:false});
+  canvas.addEventListener('mouseup',     onUp,     {passive:false});
+  canvas.addEventListener('touchstart',  onDown,   {passive:false});
+  canvas.addEventListener('touchmove',   onMove,   {passive:false});
+  canvas.addEventListener('touchend',    onUp,     {passive:false});
+  canvas.addEventListener('touchcancel', onCancel, {passive:false});
 }
+
 function _entourerValidate() {
-  const{items,selected}=_entourerState;
-  let allOk=true;
-  items.forEach((it,i)=>{
-    const el=document.getElementById('ei'+i);
-    el.onclick=null;
-    if(selected.has(i)&&it.correct){el.classList.remove('encercle');el.classList.add('ev-ok');}
-    else if(selected.has(i)&&!it.correct){el.classList.remove('encercle');el.classList.add('ev-wrong');allOk=false;}
-    else if(!selected.has(i)&&it.correct){el.classList.add('ev-miss');allOk=false;}
+  if (_entourerState.validated) return;
+  _entourerState.validated = true;
+  const {items, selected} = _entourerState;
+  const canvas = document.getElementById('ent-canvas');
+  if (canvas) canvas.style.pointerEvents = 'none';
+  document.getElementById('ent-val').disabled = true;
+
+  let allOk = true;
+  items.forEach((it,i) => {
+    const el = document.getElementById('ei'+i);
+    el.style.animation = '';
+    if (selected.has(i) && it.correct)  { el.classList.remove('encercle'); el.classList.add('ev-ok'); }
+    else if (selected.has(i) && !it.correct) { el.classList.remove('encercle'); el.classList.add('ev-wrong'); allOk = false; }
+    else if (!selected.has(i) && it.correct) { el.classList.add('ev-miss'); allOk = false; }
   });
-  const nbCorrect=items.filter((it,i)=>it.correct&&selected.has(i)).length;
-  const nbTotal=items.filter(it=>it.correct).length;
-  answer({correct:allOk, expl:`${nbCorrect}/${nbTotal} bonne${nbTotal>1?'s':''} réponse${nbTotal>1?'s':''}.`, audioExpl:allOk?'Bravo, tu as tout entouré correctement !':'Regarde les éléments en rouge — ils méritent d\'être entourés !'});
+  const nbOk  = items.filter((it,i) => it.correct && selected.has(i)).length;
+  const nbTot = items.filter(it => it.correct).length;
+  answer({
+    correct: allOk,
+    expl: `${nbOk}/${nbTot} bonne${nbTot>1?'s':''} réponse${nbTot>1?'s':''}.`,
+    audioExpl: allOk ? 'Bravo, tu as tout entouré correctement !' : `Tu en as trouvé ${nbOk} sur ${nbTot}. Écoute les corrections.`
+  });
 }
 
 function speakQuestion() {
@@ -2660,19 +2760,23 @@ function openLectureView() {
 function _renderLecList() {
   const list = document.getElementById('lec-list');
   list.innerHTML = LECTURES_DB.map((lec, i) => {
-    const done = student_read[lec.id] === 'done';
-    const locked = i > 0 && !student_read[LECTURES_DB[i-1].id];
+    const done   = student_read[lec.id] === 'done';
+    // Les 3 premières leçons sont toujours ouvertes, ensuite débloquées 1 par 1
+    const locked = i >= 3 && !student_read[LECTURES_DB[i-1].id];
     const imgSrc = (typeof LEC_IMAGES !== 'undefined' && LEC_IMAGES[lec.id]) ? LEC_IMAGES[lec.id] : null;
-    const thumb = imgSrc
+    const thumb  = imgSrc
       ? `<img class="lec-thumb" src="${imgSrc}" alt="${lec.titre}">`
       : `<div class="lec-icon">${lec.icon}</div>`;
-    return `<div class="lec-card${locked?' lec-locked':''}" onclick="${locked ? '' : 'openReader('+JSON.stringify(lec.id)+')'}">
+    const badge  = done   ? '<span class="lec-badge-done">✓ Lu</span>'
+                 : locked ? '<span class="lec-badge-lock">🔒</span>'
+                 :          '<span class="lec-arrow">▶</span>';
+    return `<div class="lec-card${locked?' lec-locked':''}" ${locked ? '' : `onclick="openReader(${JSON.stringify(lec.id)})"`}>
       ${thumb}
       <div class="lec-info">
         <div class="lec-name">${lec.titre}</div>
         <div class="lec-phonics">${lec.phonique}</div>
       </div>
-      <div>${done ? '<span class="lec-badge-done">✓ Lu</span>' : locked ? '<span class="lec-badge-lock">🔒</span>' : '<span class="lec-arrow">▶</span>'}</div>
+      <div>${badge}</div>
     </div>`;
   }).join('');
 }
@@ -2719,20 +2823,23 @@ function _renderReaderStep() {
   if (_readerStep === 0) {
     // ── Syllabes ──
     card.innerHTML = `
-      <div class="reader-step-label">🔤 Étape 1 : Les syllabes</div>
+      <div class="reader-step-label">🔤 Étape 1 — Les syllabes</div>
       ${_lecIllus(lec)}
-      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Appuie sur chaque syllabe pour l'entendre</p>
+      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Appuie sur chaque syllabe pour l'entendre, puis répète !</p>
       <div class="syllabes-grid" id="syll-grid">
         ${lec.syllabes.map((s,i)=>`<div class="syllabe-card" id="sc${i}" onclick="_heardSyllabe(${i},'${s}')">${s}</div>`).join('')}
       </div>`;
-    if (voiceEnabled) setTimeout(() => speak('Écoute et répète chaque syllabe.'), 300);
+    // Bouton "Passer" toujours visible — l'enfant peut continuer sans tout écouter
+    nextBtn.textContent = 'Continuer →';
+    nextBtn.style.display = 'block';
+    if (voiceEnabled) setTimeout(() => speak('Appuie sur chaque syllabe pour l\'entendre !'), 300);
 
   } else if (_readerStep === 1) {
     // ── Mots ──
     card.innerHTML = `
-      <div class="reader-step-label">📝 Étape 2 : Les mots</div>
+      <div class="reader-step-label">📝 Étape 2 — Les mots</div>
       ${_lecIllus(lec)}
-      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Touche chaque mot pour l'entendre</p>
+      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Touche chaque mot pour l'entendre, puis répète !</p>
       <div class="mots-list">
         ${lec.mots.map((m,i)=>`<div class="mot-item" id="mi${i}" onclick="_heardMot(${i},'${m.t.replace(/'/g,"\\'")}')">
           <span class="mot-icon">${m.e}</span>
@@ -2740,19 +2847,23 @@ function _renderReaderStep() {
           <span class="mot-speaker">🔊</span>
         </div>`).join('')}
       </div>`;
+    nextBtn.textContent = 'Continuer →';
+    nextBtn.style.display = 'block';
     if (voiceEnabled) setTimeout(() => speak('Écoute chaque mot. Tu peux le répéter !'), 300);
 
   } else if (_readerStep === 2) {
     // ── Texte ──
     const words = lec.texte.split(/\s+/).filter(Boolean);
-    const wordSpans = words.map((w,i) =>
-      `<span class="tx-word" id="tw${i}" onclick="_readWord(${i},'${w.replace(/['"]/g,'')}')">${w}</span> `
-    ).join('');
+    const wordSpans = words.map((w,i) => {
+      const clean = w.replace(/'/g, '\\\'').replace(/"/g, '');
+      return `<span class="tx-word" id="tw${i}" onclick="_readWord(${i},'${clean}')">${w}</span> `;
+    }).join('');
     card.innerHTML = `
-      <div class="reader-step-label"> Étape 3 : Je lis le texte</div>
+      <div class="reader-step-label">📖 Étape 3 — Je lis le texte</div>
       ${_lecIllus(lec)}
-      <button class="reader-listen-btn" onclick="_startTextKaraoke()">🔊 Écouter le texte</button>
+      <button class="reader-listen-btn" id="karaoke-btn" onclick="_startTextKaraoke()">🔊 Écouter le texte</button>
       <div class="texte-wrap" id="texte-wrap">${wordSpans}</div>`;
+    nextBtn.textContent = 'Continuer →';
     nextBtn.style.display = 'block';
     if (voiceEnabled) setTimeout(() => speak('Appuie sur écouter pour que je lise le texte avec toi.'), 300);
 
@@ -2764,15 +2875,10 @@ function _renderReaderStep() {
 }
 
 function _heardSyllabe(i, syll) {
-  const card = document.getElementById('sc'+i);
-  if (card) card.classList.add('heard');
+  const el = document.getElementById('sc'+i);
+  if (el) el.classList.add('heard');
   if (voiceEnabled) speak(syll);
-  else playJingle('correct');
-  const all = document.querySelectorAll('.syllabe-card');
-  const heard = document.querySelectorAll('.syllabe-card.heard');
-  if (heard.length >= Math.ceil(all.length * 0.7)) {
-    document.getElementById('reader-next-btn').style.display = 'block';
-  }
+  else { playJingle('correct'); }
 }
 
 function _heardMot(i, mot) {
@@ -2780,11 +2886,6 @@ function _heardMot(i, mot) {
   if (el) el.classList.add('heard');
   if (voiceEnabled) speak(mot);
   else playJingle('correct');
-  const all = document.querySelectorAll('.mot-item');
-  const heard = document.querySelectorAll('.mot-item.heard');
-  if (heard.length >= all.length) {
-    document.getElementById('reader-next-btn').style.display = 'block';
-  }
 }
 
 let _karaokeActive = false;
