@@ -1,0 +1,2839 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduPrimaire — Avec la voix</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;600;700&display=swap');
+
+  :root {
+    --sky: #4ECDC4; --sun: #FFE66D; --leaf: #6BCB77;
+    --coral: #FF6B6B; --purple: #C77DFF; --navy: #1A1A2E;
+    --cream: #FFFBF0; --shadow: 0 4px 0px rgba(0,0,0,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--cream); min-height: 100vh; overflow-x: hidden; }
+
+  .bg-deco {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(circle at 15% 25%, rgba(78,205,196,0.13) 0%, transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(199,125,255,0.10) 0%, transparent 40%);
+  }
+
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 16px 88px; }
+
+  /* ── HEADER ── */
+  .header { text-align: center; padding: 20px 0 10px; }
+  .logo { font-family: 'Baloo 2', cursive; font-size: 28px; font-weight: 800; color: var(--navy); }
+  .logo span { color: var(--sky); }
+
+  /* ── PROFIL ── */
+  .profile-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: white; border-radius: 20px; padding: 10px 14px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+    border: 2px solid rgba(0,0,0,0.05);
+  }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--sky), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .profile-info { flex: 1; }
+  .profile-name { font-weight: 700; font-size: 13px; color: var(--navy); }
+  .xp-bar-wrap { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+  .xp-bar-bg { flex: 1; height: 7px; background: #F0F0F0; border-radius: 4px; overflow: hidden; }
+  .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--leaf), var(--sky)); border-radius: 4px; transition: width 0.6s cubic-bezier(.34,1.56,.64,1); }
+  .xp-label { font-size: 11px; font-weight: 700; color: var(--leaf); min-width: 38px; }
+  .streak-badge { background: var(--sun); border-radius: 12px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: #8B6914; }
+  .theta-chip { background: var(--purple); color: white; border-radius: 10px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
+
+  /* ── VOICE INDICATOR ── */
+  .voice-indicator {
+    display: flex; align-items: center; gap: 8px;
+    background: white; border-radius: 16px; padding: 10px 14px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+    border: 2px solid rgba(78,205,196,0.3);
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .voice-indicator:hover { border-color: var(--sky); }
+  .voice-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #CCC; transition: background 0.3s;
+  }
+  .voice-dot.speaking { background: var(--sky); animation: pulse-dot 0.6s ease-in-out infinite alternate; }
+  .voice-dot.listening { background: var(--coral); animation: pulse-dot 0.4s ease-in-out infinite alternate; }
+  @keyframes pulse-dot { from { transform: scale(1); } to { transform: scale(1.4); } }
+  .voice-waves { display: flex; align-items: center; gap: 3px; height: 20px; }
+  .wave-bar {
+    width: 3px; border-radius: 2px; background: var(--sky);
+    transition: height 0.15s ease;
+  }
+  .voice-label { font-size: 13px; font-weight: 600; color: var(--navy); flex: 1; }
+  .voice-lang-btn {
+    font-size: 11px; background: rgba(78,205,196,0.15); color: #085041;
+    border: none; border-radius: 8px; padding: 3px 8px;
+    font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif;
+  }
+
+  /* ── SECTION ── */
+  .section-title { font-family: 'Baloo 2', cursive; font-size: 17px; font-weight: 600; color: var(--navy); margin: 14px 0 10px; }
+
+  /* ── LEÇON HERO ── */
+  .lesson-hero {
+    background: var(--navy); border-radius: 24px; padding: 20px;
+    margin-bottom: 14px; position: relative; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .lesson-hero::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:rgba(78,205,196,0.15); }
+  .lesson-tag { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--sky); text-transform: uppercase; margin-bottom: 6px; }
+  .lesson-title { font-family: 'Baloo 2', cursive; font-size: 24px; font-weight: 800; color: white; margin-bottom: 4px; }
+  .lesson-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 14px; }
+  .lesson-btn {
+    background: var(--sky); color: var(--navy); border: none; border-radius: 14px;
+    padding: 12px 22px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    transition: transform 0.1s, box-shadow 0.1s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .lesson-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+
+  /* ── EXERCICE ── */
+  .exercise-card {
+    background: white; border-radius: 24px; padding: 20px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+    border: 2px solid rgba(0,0,0,0.05); display: none;
+  }
+  .exercise-card.visible { display: block; }
+
+  .ex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .ex-progress-dots { display: flex; gap: 6px; }
+  .dot-ex { width: 10px; height: 10px; border-radius: 50%; background: #E8E8E8; transition: background 0.3s; }
+  .dot-ex.done { background: var(--leaf); }
+  .dot-ex.current { background: var(--sky); transform: scale(1.2); }
+  .timer-badge { background: #FFF3CD; border-radius: 10px; padding: 4px 10px; font-size: 13px; font-weight: 700; color: #856404; }
+
+  /* ── BOUTON ÉCOUTE ── */
+  .listen-btn {
+    width: 100%; padding: 14px; margin-bottom: 16px;
+    background: rgba(78,205,196,0.1); border: 2.5px solid var(--sky);
+    border-radius: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: #085041;
+    transition: background 0.2s, transform 0.1s;
+    position: relative; overflow: hidden;
+  }
+  .listen-btn:hover { background: rgba(78,205,196,0.18); }
+  .listen-btn:active { transform: scale(0.98); }
+  .listen-btn.playing { background: rgba(78,205,196,0.25); border-color: #0F6E56; }
+  .listen-icon { font-size: 22px; }
+  .sound-ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(78,205,196,0.3);
+    animation: ripple-out 1s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes ripple-out {
+    0% { width: 0; height: 0; opacity: 0.8; }
+    100% { width: 200px; height: 200px; opacity: 0; margin-left: -100px; margin-top: -100px; }
+  }
+
+  .question-visual { font-size: 68px; text-align: center; margin-bottom: 10px; animation: bounce-in 0.4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes bounce-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .question-text { font-family: 'Baloo 2', cursive; font-size: 20px; font-weight: 600; color: var(--navy); text-align: center; margin-bottom: 16px; line-height: 1.3; }
+
+  .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .choice-btn {
+    background: #F8F8F8; border: 3px solid #E8E8E8; border-radius: 16px; padding: 14px 10px;
+    font-family: 'Baloo 2', cursive; font-size: 20px; font-weight: 600; color: var(--navy);
+    cursor: pointer; text-align: center;
+    transition: transform 0.1s, border-color 0.15s, background 0.15s;
+    box-shadow: 0 3px 0 #E0E0E0;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .choice-btn:hover { border-color: var(--sky); transform: translateY(-2px); }
+  .choice-btn:active { transform: translateY(2px); box-shadow: none; }
+  .choice-btn .choice-sound { font-size: 11px; opacity: 0.5; }
+  .choice-btn.correct { background: #D4EDDA; border-color: var(--leaf); animation: pop-correct 0.4s cubic-bezier(.34,1.56,.64,1); }
+  .choice-btn.wrong { background: #F8D7DA; border-color: var(--coral); animation: shake 0.4s; }
+  @keyframes pop-correct { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  /* ── MICRO BTN ── */
+  .mic-section { margin-bottom: 14px; }
+  .mic-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 18px;
+    background: linear-gradient(135deg, var(--coral), #FF8E53);
+    color: white; font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 0 rgba(255,107,107,0.4);
+    transition: transform 0.1s, box-shadow 0.1s; position: relative; overflow: hidden;
+  }
+  .mic-btn.listening-active {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    animation: mic-pulse 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes mic-pulse { from { box-shadow: 0 4px 0 rgba(220,53,69,0.4); } to { box-shadow: 0 4px 20px rgba(220,53,69,0.6); } }
+  .mic-btn:active { transform: translateY(2px); box-shadow: none; }
+  .mic-result {
+    background: rgba(255,107,107,0.08); border: 1.5px solid rgba(255,107,107,0.3);
+    border-radius: 12px; padding: 10px 14px; margin-top: 8px;
+    font-size: 14px; color: var(--navy); text-align: center; display: none;
+  }
+  .mic-result.show { display: block; animation: slide-up 0.3s ease; }
+  @keyframes slide-up { from{transform:translateY(8px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  /* ── FEEDBACK ── */
+  .feedback-box { border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; display: none; animation: slide-up 0.3s ease; }
+  .feedback-box.ok { background: #D4EDDA; color: #155724; display: block; }
+  .feedback-box.ko { background: #F8D7DA; color: #721c24; display: block; }
+  .feedback-icon { font-size: 18px; margin-bottom: 3px; }
+  .feedback-text { font-weight: 700; font-size: 14px; }
+  .feedback-expl { font-size: 13px; margin-top: 2px; }
+
+  .next-btn {
+    width: 100%; padding: 15px; background: var(--leaf); color: white;
+    border: none; border-radius: 16px; font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 0 #4a9a55; display: none;
+    align-items: center; justify-content: center; gap: 8px;
+    transition: transform 0.1s;
+  }
+  .next-btn.visible { display: flex; animation: slide-up 0.3s ease; }
+  .next-btn:active { transform: translateY(3px); box-shadow: none; }
+
+  /* ── RÉSULTAT ── */
+  .result-card { background: var(--navy); border-radius: 24px; padding: 28px 20px; text-align: center; display: none; box-shadow: var(--shadow); }
+  .result-card.visible { display: block; animation: bounce-in 0.5s cubic-bezier(.34,1.56,.64,1); }
+  .result-stars { font-size: 44px; margin-bottom: 8px; }
+  .result-title { font-family: 'Baloo 2', cursive; font-size: 24px; font-weight: 800; color: white; margin-bottom: 4px; }
+  .result-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 14px; }
+  .result-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .rstat { background: rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 8px; }
+  .rstat-val { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800; color: var(--sun); }
+  .rstat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .algo-box { background: rgba(78,205,196,0.1); border: 1px solid rgba(78,205,196,0.3); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; text-align: left; }
+  .algo-title { font-size: 11px; font-weight: 700; color: var(--sky); letter-spacing: 0.5px; margin-bottom: 6px; }
+  .algo-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+  .algo-key { color: rgba(255,255,255,0.6); }
+  .algo-val { color: white; font-weight: 600; }
+  .restart-btn { width: 100%; padding: 14px; background: var(--sky); color: var(--navy); border: none; border-radius: 14px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 2px solid rgba(0,0,0,0.06);
+    display: flex; padding: 8px 16px 14px; gap: 4px; z-index: 100;
+  }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px; border-radius: 14px; cursor: pointer; border: none; background: transparent; }
+  .nav-item.active { background: rgba(78,205,196,0.12); }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; font-weight: 600; color: #AAA; }
+  .nav-item.active .nav-label { color: var(--sky); }
+
+  /* ── XP POPUP ── */
+  .xp-popup {
+    position: fixed; top: 100px; right: 20px;
+    background: var(--sun); color: #8B6914; border-radius: 20px; padding: 10px 18px;
+    font-family: 'Baloo 2', cursive; font-size: 20px; font-weight: 800;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 200; display: none;
+    animation: xp-fly 1.5s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes xp-fly { 0%{opacity:0;transform:translateY(20px) scale(0.8)} 20%{opacity:1;transform:translateY(0) scale(1.1)} 70%{opacity:1;transform:translateY(-10px) scale(1)} 100%{opacity:0;transform:translateY(-40px) scale(0.9)} }
+
+  /* ── MASCOTTE ── */
+  .mascot { position: fixed; bottom: 80px; right: 16px; width: 60px; height: 60px; background: var(--sun); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: var(--shadow); cursor: pointer; z-index: 50; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .speech-bubble { position: fixed; bottom: 148px; right: 16px; background: white; border-radius: 14px 14px 4px 14px; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--navy); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; max-width: 180px; display: none; animation: slide-up 0.3s ease; }
+  .speech-bubble.show { display: block; }
+
+  /* ── WAVE ANIMATION (pendant la lecture TTS) ── */
+  .tts-wave {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; height: 28px; margin: 0 auto 8px;
+  }
+  .tts-bar {
+    width: 4px; border-radius: 2px; background: var(--sky);
+    animation: none; height: 4px;
+  }
+  .tts-bar.active { animation: wave-dance var(--d, 0.5s) ease-in-out infinite alternate; }
+  @keyframes wave-dance { from{height:4px} to{height:24px} }
+
+  /* ══ HIBOU AGENT ══ */
+  .hibou-wrap {
+    position: fixed; bottom: 82px; right: 14px; z-index: 50; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .hibou-float { animation: float 3s ease-in-out infinite; }
+  .hibou-float.hibou-happy { animation: hibou-dance 0.45s ease-in-out 4; }
+  .hibou-float.hibou-thinking { animation: hibou-think 1.2s ease-in-out infinite; }
+  @keyframes hibou-dance { 0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-10px) rotate(-12deg)} 70%{transform:translateY(-10px) rotate(12deg)} }
+  @keyframes hibou-think { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg) translateY(-3px)} }
+
+  .h-wrap { position: relative; width: 70px; height: 82px; }
+  .h-head {
+    width: 54px; height: 50px; background: #7D4E1E;
+    border-radius: 50% 50% 42% 42%;
+    position: absolute; top: 0; left: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.22);
+  }
+  .h-head::before, .h-head::after {
+    content:''; position:absolute; top:-10px;
+    width:13px; height:17px; background:#7D4E1E;
+    border-radius: 50% 50% 0 0;
+  }
+  .h-head::before { left:7px; transform:rotate(-18deg); }
+  .h-head::after  { right:7px; transform:rotate(18deg); }
+  .h-face {
+    width:42px; height:40px; background:#C99650;
+    border-radius:50%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:4px;
+  }
+  .h-eyes { display:flex; gap:5px; }
+  .h-eye {
+    width:14px; height:14px; background:var(--sun);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    transform-origin:center;
+    animation: owl-blink 5s ease-in-out infinite;
+  }
+  .h-eye:last-child { animation-delay:0.12s; }
+  @keyframes owl-blink { 0%,45%,55%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.07)} }
+  .h-pupil {
+    width:8px; height:8px; background:#1A1A2E;
+    border-radius:50%; position:relative;
+  }
+  .h-pupil::after {
+    content:''; width:3px; height:3px; background:rgba(255,255,255,0.85);
+    border-radius:50%; position:absolute; top:1px; left:1px;
+  }
+  .h-beak { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:8px solid #E8961A; }
+  .h-torso {
+    width:54px; height:38px; background:#7D4E1E;
+    border-radius:40% 40% 52% 52%;
+    position:absolute; bottom:0; left:8px;
+    display:flex; justify-content:space-between;
+    align-items:flex-start; padding:5px 2px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  .h-wing {
+    width:14px; height:26px; background:#5C3210;
+    border-radius:50% 20% 40% 50%;
+  }
+  .h-wing-l { transform:rotate(10deg); transform-origin:top right; }
+  .h-wing-r { transform:rotate(-10deg) scaleX(-1); transform-origin:top left; }
+  .hibou-float.hibou-happy .h-wing-l { animation:wfl 0.3s ease-in-out 4 alternate; }
+  .hibou-float.hibou-happy .h-wing-r { animation:wfr 0.3s ease-in-out 4 alternate; }
+  @keyframes wfl { from{transform:rotate(10deg)} to{transform:rotate(-35deg)} }
+  @keyframes wfr { from{transform:rotate(-10deg) scaleX(-1)} to{transform:rotate(35deg) scaleX(-1)} }
+  .h-belly {
+    width:22px; height:17px; background:#C99650; border-radius:50%;
+    position:absolute; bottom:5px; left:24px; opacity:0.6;
+  }
+
+  .hibou-tip {
+    position:absolute; bottom:calc(100% + 8px); right:-8px;
+    background:white; border-radius:14px 14px 4px 14px;
+    padding:10px 13px; font-size:12px; font-weight:600; color:var(--navy);
+    box-shadow:0 4px 14px rgba(0,0,0,0.13); max-width:195px;
+    display:none; animation:slide-up 0.25s ease; z-index:60;
+    border:2px solid rgba(78,205,196,0.35); white-space:pre-line; line-height:1.5;
+  }
+  .hibou-tip.show { display:block; }
+  .hibou-tip::after {
+    content:''; position:absolute; bottom:-10px; right:18px;
+    border-left:8px solid transparent; border-right:8px solid transparent;
+    border-top:10px solid white;
+  }
+
+  /* ══ SÉLECTEUR SUJET + LEÇONS ══ */
+  .subject-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .stab {
+    flex:1; padding:11px 8px; border-radius:16px; border:2.5px solid #E8E8E8;
+    background:white; font-family:'Nunito',sans-serif; font-size:14px; font-weight:700;
+    cursor:pointer; color:#AAA; transition:all 0.18s; display:flex; align-items:center; justify-content:center; gap:6px;
+    box-shadow:0 3px 0 #E0E0E0;
+  }
+  .stab.active { border-color:var(--sky); background:rgba(78,205,196,0.1); color:var(--navy); box-shadow:0 3px 0 rgba(78,205,196,0.3); }
+
+  .lesson-grid { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .lesson-card {
+    background:white; border-radius:18px; padding:13px 15px;
+    display:flex; align-items:center; gap:12px;
+    box-shadow:0 3px 0 rgba(0,0,0,0.08); border:2.5px solid transparent;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .lesson-card:hover { border-color:var(--sky); transform:translateY(-1px); }
+  .lesson-card.locked { opacity:0.45; cursor:default; }
+  .lesson-card.done { border-color:var(--leaf); }
+  .lesson-card.current { border-color:var(--sky); background:rgba(78,205,196,0.06); }
+  .lc-icon { width:40px; height:40px; border-radius:12px; background:#F5F5F5; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .lc-icon.done-bg { background:rgba(107,203,119,0.18); }
+  .lc-icon.curr-bg { background:rgba(78,205,196,0.18); }
+  .lc-info { flex:1; min-width:0; }
+  .lc-num { font-size:10px; font-weight:700; color:#AAA; letter-spacing:0.5px; text-transform:uppercase; }
+  .lc-title { font-weight:700; font-size:13px; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lc-excount { font-size:11px; color:#AAA; margin-top:1px; }
+  .lc-badge { font-size:18px; flex-shrink:0; }
+
+  /* ══ PANNEAU AGENT ══ */
+  .agent-overlay {
+    position:fixed; inset:0; background:rgba(26,26,46,0.65);
+    z-index:300; display:none; align-items:flex-end; justify-content:center;
+  }
+  .agent-overlay.open { display:flex; animation:fade-in 0.2s ease; }
+  @keyframes fade-in { from{opacity:0} to{opacity:1} }
+  .agent-sheet {
+    background:white; border-radius:26px 26px 0 0;
+    padding:22px 18px 36px; width:100%; max-width:480px;
+    max-height:82vh; overflow-y:auto;
+    animation:sheet-up 0.32s cubic-bezier(.34,1.4,.64,1);
+  }
+  @keyframes sheet-up { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .agent-head { display:flex; align-items:center; gap:11px; margin-bottom:16px; }
+  .agent-owl-mini {
+    width:44px; height:44px; background:var(--sun); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    animation:float 3s ease-in-out infinite; flex-shrink:0;
+  }
+  .agent-head-txt .agent-title { font-family:'Baloo 2',cursive; font-size:18px; font-weight:800; color:var(--navy); }
+  .agent-head-txt .agent-sub { font-size:11px; color:#999; }
+  .agent-close-btn {
+    margin-left:auto; width:30px; height:30px; border-radius:50%;
+    background:#F0F0F0; border:none; font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .agent-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .atab {
+    padding:6px 12px; border-radius:12px; font-size:12px; font-weight:700;
+    border:2px solid #E8E8E8; background:white; cursor:pointer; color:#999;
+    transition:all 0.15s;
+  }
+  .atab.active { background:var(--sky); border-color:var(--sky); color:var(--navy); }
+
+  /* ══ ÉCRAN DE CONNEXION ══ */
+  #login-view {
+    position:fixed; inset:0; z-index:500;
+    background:linear-gradient(160deg,#E6FAF8 0%,#FFF8E1 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:28px 24px; animation:fade-in-up 0.55s ease both;
+  }
+  @keyframes fade-in-up { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  .login-owl-big { font-size:72px; animation:float 3s ease-in-out infinite; margin-bottom:6px; }
+  .login-title { font-family:'Baloo 2',cursive; font-size:30px; font-weight:800; color:var(--navy); text-align:center; }
+  .login-subtitle { font-size:14px; color:#999; margin-bottom:24px; }
+  .login-label { font-size:13px; font-weight:700; color:#666; margin-bottom:6px; align-self:flex-start; max-width:340px; width:100%; }
+  .login-input {
+    width:100%; max-width:340px; padding:15px 20px;
+    border:3px solid #E8E8E8; border-radius:20px;
+    font-family:'Baloo 2',cursive; font-size:22px; font-weight:700; color:var(--navy);
+    outline:none; margin-bottom:20px; text-align:center; background:white;
+    transition:border-color 0.2s; box-shadow:0 4px 0 #E0E0E0;
+  }
+  .login-input:focus { border-color:var(--sky); box-shadow:0 4px 0 rgba(78,205,196,0.35); }
+  .login-class-row { display:flex; gap:14px; margin-bottom:28px; }
+  .login-class-btn {
+    width:130px; padding:16px 10px;
+    background:white; border:3px solid #E8E8E8; border-radius:22px;
+    font-family:'Baloo 2',cursive; font-size:28px; font-weight:800; color:#CCC;
+    cursor:pointer; text-align:center; transition:all 0.18s;
+    box-shadow:0 5px 0 #E0E0E0;
+  }
+  .login-class-btn .lc-sub { font-size:11px; font-family:'Nunito',sans-serif; font-weight:600; display:block; margin-top:3px; }
+  .login-class-btn.sel { border-color:var(--sky); color:var(--navy); background:rgba(78,205,196,0.1); box-shadow:0 5px 0 rgba(78,205,196,0.35); }
+  .login-go {
+    width:100%; max-width:340px; padding:17px;
+    background:var(--sky); color:var(--navy); border:none; border-radius:22px;
+    font-family:'Baloo 2',cursive; font-size:21px; font-weight:800;
+    cursor:pointer; box-shadow:0 5px 0 #2aada4;
+    transition:transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+    opacity:.42; pointer-events:none; display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .login-go.ready { opacity:1; pointer-events:auto; }
+  .login-go:active { transform:translateY(3px); box-shadow:0 2px 0 #2aada4; }
+
+  /* ══ BIENVENUE OVERLAY ══ */
+  #welcome-overlay {
+    position:fixed; inset:0; z-index:600;
+    background:rgba(26,26,46,0.9); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.4s;
+  }
+  #welcome-overlay.show { opacity:1; pointer-events:auto; }
+  #welcome-overlay.hide { animation:fade-out-ov 0.5s ease forwards; }
+  @keyframes fade-out-ov { from{opacity:1} to{opacity:0;transform:scale(1.04)} }
+  .wov-inner { position:relative; display:flex; flex-direction:column; align-items:center; }
+  .wov-owl {
+    transform:scale(2.6); margin-bottom:88px;
+    animation:wov-pop 0.55s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes wov-pop { from{transform:scale(0) rotate(-12deg)} to{transform:scale(2.6)} }
+  .wov-bubble {
+    position:absolute; bottom:calc(100% + 0px);
+    background:white; border-radius:20px 20px 20px 6px; padding:14px 18px;
+    font-family:'Baloo 2',cursive; font-size:15px; font-weight:700; color:var(--navy);
+    box-shadow:0 6px 24px rgba(0,0,0,0.25); text-align:center; line-height:1.5;
+    animation:wov-bubble-in 0.4s 0.35s cubic-bezier(.34,1.56,.64,1) both;
+    white-space:nowrap;
+  }
+  @keyframes wov-bubble-in { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .wov-bubble::after {
+    content:''; position:absolute; top:100%; left:22px;
+    border-left:9px solid transparent; border-right:9px solid transparent; border-top:11px solid white;
+  }
+
+  /* ══ PARCOURS ══ */
+  .lesson-path { display:flex; flex-direction:column; align-items:center; margin-bottom:14px; }
+  .path-step { display:flex; flex-direction:column; align-items:center; }
+  .path-connector-v { width:4px; height:26px; background:#EEE; border-radius:2px; transition:background 0.4s; }
+  .path-connector-v.done { background:linear-gradient(to bottom,var(--leaf),#a8e6b0); }
+  .path-node-wrap { display:flex; align-items:center; gap:10px; }
+  .path-node-label {
+    max-width:130px; background:white; border-radius:14px;
+    padding:8px 12px; box-shadow:0 3px 0 rgba(0,0,0,0.08);
+    border:2px solid #EEE;
+  }
+  .pnl-title { font-weight:700; font-size:12px; color:var(--navy); line-height:1.2; }
+  .pnl-meta { font-size:10px; color:#AAA; margin-top:1px; }
+  .path-node {
+    width:76px; height:76px; border-radius:50%;
+    background:white; border:4px solid #E0E0E0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    cursor:pointer; transition:all 0.2s; flex-shrink:0;
+    box-shadow:0 5px 0 #D8D8D8; position:relative;
+  }
+  .path-node.pn-done { border-color:var(--leaf); background:#EDF9EF; box-shadow:0 5px 0 #4a9a55; }
+  .path-node.pn-current {
+    border-color:var(--sky); background:rgba(78,205,196,0.1); box-shadow:0 5px 0 #2aada4;
+    animation:pn-pulse 2s ease-in-out infinite;
+  }
+  @keyframes pn-pulse { 0%,100%{box-shadow:0 5px 0 #2aada4,0 0 0 6px rgba(78,205,196,0.2)} 50%{box-shadow:0 5px 0 #2aada4,0 0 0 12px rgba(78,205,196,0.07)} }
+  .path-node.pn-locked { opacity:.4; cursor:default; }
+  .path-node:not(.pn-locked):hover { transform:scale(1.08) translateY(-2px); }
+  .pn-icon { font-size:24px; }
+  .pn-num-lbl { font-size:9px; font-weight:700; color:#AAA; letter-spacing:.4px; }
+  .pn-badge {
+    position:absolute; top:-5px; right:-5px;
+    width:22px; height:22px; border-radius:50%; font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; box-shadow:0 2px 4px rgba(0,0,0,0.18);
+  }
+  .pn-badge.ok { background:var(--leaf); color:white; }
+  .pn-badge.curr { background:var(--sky); color:var(--navy); }
+  .pn-badge.lk { background:#CCC; color:white; font-size:9px; }
+
+  /* ══ STICKERS ══ */
+  #sticker-overlay {
+    position:fixed; inset:0; z-index:700; display:none;
+    background:rgba(26,26,46,0.9); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center;
+  }
+  #sticker-overlay.show { display:flex; }
+  .sticker-popup {
+    background:var(--navy); border-radius:28px; padding:32px 24px;
+    text-align:center; max-width:310px; width:90%;
+    animation:bounce-in 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .sticker-big { font-size:84px; animation:float 2s ease-in-out infinite; display:block; margin-bottom:10px; }
+  .sticker-title { font-family:'Baloo 2',cursive; font-size:22px; font-weight:800; color:var(--sun); }
+  .sticker-desc { font-size:13px; color:rgba(255,255,255,0.6); margin:6px 0 20px; }
+  .sticker-close { width:100%; padding:14px; background:var(--sky); color:var(--navy); border:none; border-radius:16px; font-family:'Baloo 2',cursive; font-size:17px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #2aada4; }
+  .sticker-board { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; min-height:20px; }
+  .sticker-chip { width:40px; height:40px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 3px 0 rgba(0,0,0,0.1); border:2px solid rgba(78,205,196,0.25); animation:bounce-in 0.3s cubic-bezier(.34,1.56,.64,1); }
+
+  /* ══ KARAOKÉ ══ */
+  /* ══ BADGE TYPE EXERCICE ══ */
+  .ex-type-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--navy); color:white; border-radius:20px;
+    padding:4px 12px; font-size:11px; font-weight:700; letter-spacing:.5px;
+    margin-bottom:10px;
+  }
+
+  /* ══ RELIER ══ */
+  .relier-wrap { display:flex; align-items:stretch; gap:0; width:100%; margin-bottom:10px; }
+  .relier-col { display:flex; flex-direction:column; gap:8px; flex:1; }
+  .relier-mid { width:38px; display:flex; flex-direction:column; justify-content:space-around; align-items:center; position:relative; }
+  .relier-item {
+    padding:12px 10px; border-radius:16px; border:3px solid #E8E8E8;
+    background:white; cursor:pointer; text-align:center;
+    transition:all 0.18s; box-shadow:0 3px 0 #E0E0E0;
+    font-family:'Baloo 2',cursive; font-weight:700;
+    min-height:56px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:2px;
+  }
+  .relier-item:hover { transform:scale(1.04); }
+  .relier-item.rl-selected { border-color:var(--sky); box-shadow:0 0 0 3px rgba(78,205,196,0.3); animation:pn-pulse 1.2s ease-in-out infinite; }
+  .relier-item.rl-paired { cursor:default; }
+  .relier-item .rl-icon { font-size:24px; }
+  .relier-item .rl-txt  { font-size:18px; }
+  .relier-item .rl-sub  { font-size:10px; color:#AAA; }
+  .relier-validate { width:100%; padding:14px; margin-top:4px; background:var(--leaf); color:white; border:none; border-radius:16px; font-family:'Baloo 2',cursive; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #4a9a55; display:none; }
+  .relier-dot { width:8px; height:8px; border-radius:50%; background:#E0E0E0; }
+
+  /* ══ ENTOURER ══ */
+  .entourer-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .entourer-item {
+    border-radius:50%; border:4px solid transparent;
+    padding:10px 6px; cursor:pointer; text-align:center;
+    transition:all 0.18s; background:white;
+    box-shadow:0 3px 0 rgba(0,0,0,0.08);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    min-height:72px; aspect-ratio:1;
+  }
+  .entourer-item:hover { transform:scale(1.06); }
+  .entourer-item.encercle {
+    border-color:var(--sky);
+    background:rgba(78,205,196,0.1);
+    animation:encercle-pop 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes encercle-pop { 0%{transform:scale(1)} 50%{transform:scale(1.14)} 100%{transform:scale(1)} }
+  .entourer-item.ev-ok { border-color:var(--leaf); background:rgba(107,203,119,0.18); }
+  .entourer-item.ev-miss { border-color:var(--coral); background:rgba(255,107,107,0.12); animation:shake 0.4s; }
+  .entourer-item.ev-wrong { border-color:var(--coral); background:rgba(255,107,107,0.12); }
+  .entourer-label { font-family:'Baloo 2',cursive; font-size:20px; font-weight:700; color:var(--navy); line-height:1; }
+  .entourer-sub { font-size:9px; color:#AAA; text-align:center; line-height:1.2; }
+  .entourer-validate { width:100%; padding:14px; background:var(--sky); color:var(--navy); border:none; border-radius:16px; font-family:'Baloo 2',cursive; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #2aada4; }
+
+  /* ══ TRACE INLINE ══ */
+  #trace-inline-canvas { border-radius:18px; background:#F8FFFE; border:2.5px solid rgba(78,205,196,0.3); display:block; width:100%; touch-action:none; cursor:crosshair; }
+  .trace-inline-hint { text-align:center; font-size:12px; color:#AAA; margin:6px 0; }
+
+  .kara-w { display:inline-block; border-radius:5px; padding:0 2px; transition:all 0.12s; }
+  .kara-w.k-on { background:rgba(78,205,196,0.35); transform:scale(1.08); }
+  .kara-w.k-done { color:var(--sky); }
+
+  /* ══ MODE ALPHABET ══ */
+  .alpha-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  .alpha-card {
+    background:white; border-radius:20px; padding:14px 8px;
+    text-align:center; border:2.5px solid #EEE; cursor:pointer;
+    transition:all 0.18s; box-shadow:0 4px 0 #E0E0E0;
+    position:relative;
+  }
+  .alpha-card:hover { border-color:var(--sky); transform:translateY(-2px); }
+  .alpha-card.alpha-ok { border-color:var(--leaf); }
+  .alpha-icon { font-size:22px; }
+  .alpha-L { font-family:'Baloo 2',cursive; font-size:30px; font-weight:800; color:var(--navy); line-height:1; }
+  .alpha-l { font-family:'Baloo 2',cursive; font-size:14px; color:#AAA; }
+  .alpha-word { font-size:10px; color:#BBB; margin-top:2px; }
+  .alpha-ok-badge { position:absolute; top:-4px; right:-4px; width:18px; height:18px; background:var(--leaf); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:700; }
+
+  #alpha-detail {
+    position:fixed; inset:0; z-index:700;
+    background:rgba(26,26,46,0.9); backdrop-filter:blur(5px);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #alpha-detail.show { display:flex; }
+  .alpha-detail-inner {
+    background:white; border-radius:28px; padding:28px 22px; width:100%; max-width:360px;
+    animation:bounce-in 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .alpha-detail-ltr { font-family:'Baloo 2',cursive; font-size:80px; font-weight:800; color:var(--sky); text-align:center; }
+  .alpha-ex-row { background:#F8F8F8; border-radius:14px; padding:11px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .alpha-ex-icon { font-size:28px; }
+  .alpha-ex-info .alpha-ex-word { font-family:'Baloo 2',cursive; font-size:20px; font-weight:700; color:var(--navy); }
+  .alpha-ex-info .alpha-ex-syll { font-size:11px; color:#AAA; }
+  .alpha-action-btn {
+    width:100%; padding:12px; border:none; border-radius:14px;
+    font-family:'Baloo 2',cursive; font-size:15px; font-weight:800;
+    cursor:pointer; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* ══ TRACÉ DE LETTRE ══ */
+  #trace-modal {
+    position:fixed; inset:0; z-index:700; display:none;
+    background:rgba(26,26,46,0.92); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center; padding:18px;
+  }
+  #trace-modal.show { display:flex; }
+  .trace-inner {
+    background:white; border-radius:28px; padding:20px; width:100%; max-width:340px;
+    animation:bounce-in 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .trace-title { font-family:'Baloo 2',cursive; font-size:20px; font-weight:800; color:var(--navy); text-align:center; margin-bottom:12px; }
+  #trace-canvas { border-radius:18px; background:#F8FFFE; border:2.5px solid rgba(78,205,196,0.3); display:block; width:100%; cursor:crosshair; touch-action:none; }
+  .trace-prog-wrap { height:10px; background:#EEE; border-radius:6px; margin:10px 0; overflow:hidden; }
+  #trace-prog-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--sky),var(--leaf)); border-radius:6px; transition:width 0.15s; }
+  .trace-btns { display:flex; gap:8px; }
+  .trace-btn { flex:1; padding:13px; border:none; border-radius:14px; font-family:'Baloo 2',cursive; font-size:15px; font-weight:800; cursor:pointer; }
+  .tb-clear { background:#F0F0F0; color:#666; }
+  .tb-done { background:var(--sky); color:var(--navy); }
+  .trace-trigger {
+    width:100%; padding:12px; margin-top:8px; border:2.5px dashed rgba(78,205,196,0.5);
+    border-radius:14px; background:rgba(78,205,196,0.05); font-family:'Baloo 2',cursive;
+    font-size:14px; font-weight:700; color:var(--sky); cursor:pointer; transition:all 0.15s;
+  }
+  .trace-trigger:hover { background:rgba(78,205,196,0.12); }
+
+  .a-explain {
+    background:rgba(78,205,196,0.08); border:1.5px solid rgba(78,205,196,0.28);
+    border-radius:16px; padding:14px; margin-bottom:10px;
+  }
+  .a-explain-title { font-weight:800; font-size:14px; color:var(--navy); margin-bottom:7px; }
+  .a-explain-body { font-size:13px; color:#444; line-height:1.65; }
+  .a-box {
+    background:white; border:2.5px solid var(--sun); border-radius:14px;
+    padding:11px 13px; margin-bottom:10px; font-size:13px; color:var(--navy);
+  }
+  .a-box-label { font-weight:700; font-size:11px; color:#856404; letter-spacing:.4px; margin-bottom:5px; }
+  .tip-pill {
+    display:inline-block; background:rgba(107,203,119,0.15); color:#155724;
+    border-radius:8px; padding:4px 10px; font-size:12px; font-weight:700; margin:3px 2px;
+  }
+
+  /* ── LECTURE ── */
+  #lecture-view { display:none; }
+  .lec-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .lec-title-main { font-family:'Baloo 2',cursive; font-size:20px; font-weight:900; color:var(--navy); }
+  .lec-subtitle { font-size:12px; color:#888; margin-top:2px; }
+  .lec-card {
+    background:white; border-radius:20px; padding:18px 16px;
+    box-shadow:0 3px 14px rgba(0,0,0,0.08); margin-bottom:12px;
+    display:flex; align-items:center; gap:14px; cursor:pointer; position:relative;
+    border:2px solid transparent; transition:border 0.15s;
+  }
+  .lec-card:active { border-color:var(--sky); }
+  .lec-icon { font-size:36px; flex-shrink:0; }
+  .lec-thumb { width:56px; height:56px; border-radius:12px; object-fit:cover; flex-shrink:0; border:2px solid rgba(78,205,196,0.25); }
+  .reader-illus { width:100%; max-height:200px; object-fit:cover; border-radius:16px; margin-bottom:14px; display:block; }
+  .lec-locked { opacity:0.55; pointer-events:none; }
+  .lec-info { flex:1; }
+  .lec-name { font-family:'Baloo 2',cursive; font-size:15px; font-weight:800; color:var(--navy); }
+  .lec-phonics { font-size:12px; color:#888; margin-top:2px; }
+  .lec-badge-done { background:var(--leaf); color:white; border-radius:10px; padding:3px 8px; font-size:11px; font-weight:700; }
+  .lec-badge-lock { background:#EEE; color:#AAA; border-radius:10px; padding:3px 8px; font-size:11px; font-weight:700; }
+  .lec-arrow { font-size:20px; color:var(--sky); }
+
+  /* Reader view */
+  #reader-view { display:none; }
+  .reader-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .reader-back { background:none; border:none; font-size:26px; cursor:pointer; padding:0; }
+  .reader-title { font-family:'Baloo 2',cursive; font-size:17px; font-weight:900; color:var(--navy); flex:1; }
+  .reader-step-dots { display:flex; gap:6px; }
+  .rd-dot { width:8px; height:8px; border-radius:50%; background:#DDD; transition:background 0.2s; }
+  .rd-dot.done { background:var(--leaf); }
+  .rd-dot.current { background:var(--sky); transform:scale(1.3); }
+  .reader-card {
+    background:white; border-radius:22px; padding:22px 18px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.09); margin-bottom:16px; min-height:200px;
+  }
+  .reader-step-label { font-family:'Baloo 2',cursive; font-size:13px; font-weight:800; color:var(--sky); letter-spacing:.5px; margin-bottom:14px; text-transform:uppercase; }
+  /* Step 1: Syllabes */
+  .syllabes-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .syllabe-card {
+    background:linear-gradient(135deg,var(--sky),#6bcb77); color:white;
+    border-radius:16px; padding:14px 20px; font-family:'Baloo 2',cursive;
+    font-size:28px; font-weight:900; cursor:pointer; transition:all 0.18s;
+    box-shadow:0 4px 0 rgba(0,0,0,0.12); user-select:none; position:relative;
+  }
+  .syllabe-card.heard { background:linear-gradient(135deg,var(--leaf),#3a9e4a); }
+  .syllabe-card:active { transform:scale(0.93); box-shadow:0 1px 0 rgba(0,0,0,0.12); }
+  /* Step 2: Mots */
+  .mots-list { display:flex; flex-direction:column; gap:10px; }
+  .mot-item {
+    display:flex; align-items:center; gap:12px; background:#F7FFFE;
+    border:2px solid rgba(78,205,196,0.2); border-radius:16px; padding:12px 16px;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .mot-item.heard { border-color:var(--leaf); background:rgba(107,203,119,0.08); }
+  .mot-icon { font-size:24px; }
+  .mot-text { font-family:'Baloo 2',cursive; font-size:22px; font-weight:800; color:var(--navy); flex:1; }
+  .mot-speaker { font-size:18px; }
+  /* Step 3: Texte */
+  .texte-wrap { font-family:'Baloo 2',cursive; font-size:22px; font-weight:700; color:var(--navy); line-height:1.8; text-align:center; }
+  .tx-word { cursor:pointer; border-radius:8px; padding:2px 4px; transition:background 0.15s; display:inline-block; }
+  .tx-word:hover { background:rgba(78,205,196,0.15); }
+  .tx-word.speaking { background:rgba(78,205,196,0.35); color:var(--sky); transform:scale(1.1); }
+  .tx-word.done { color:var(--leaf); }
+  .reader-listen-btn {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:14px; background:linear-gradient(135deg,var(--sky),#6bcb77);
+    color:white; border:none; border-radius:16px; font-family:'Baloo 2',cursive;
+    font-size:17px; font-weight:800; cursor:pointer; margin-bottom:14px;
+    box-shadow:0 4px 0 rgba(78,205,196,0.4);
+  }
+  .reader-listen-btn:active { transform:translateY(3px); box-shadow:none; }
+  /* Step 4: Compréhension */
+  .comp-question { font-family:'Baloo 2',cursive; font-size:19px; font-weight:800; color:var(--navy); text-align:center; margin-bottom:20px; }
+  .comp-choices { display:flex; flex-direction:column; gap:10px; }
+  .comp-btn {
+    padding:15px 18px; border:2.5px solid rgba(78,205,196,0.3); border-radius:16px;
+    background:white; font-family:'Baloo 2',cursive; font-size:17px; font-weight:700;
+    color:var(--navy); cursor:pointer; transition:all 0.15s; text-align:left;
+  }
+  .comp-btn:active { background:rgba(78,205,196,0.1); }
+  .comp-btn.correct { background:rgba(107,203,119,0.15); border-color:var(--leaf); color:var(--leaf); }
+  .comp-btn.wrong { background:rgba(255,107,107,0.12); border-color:#FF6B6B; color:#cc3333; }
+  .reader-next-btn {
+    width:100%; padding:16px; background:var(--sky); color:var(--navy); border:none;
+    border-radius:18px; font-family:'Baloo 2',cursive; font-size:17px; font-weight:900;
+    cursor:pointer; box-shadow:0 4px 0 #2aada4; display:none;
+  }
+  .reader-result {
+    text-align:center; padding:20px;
+  }
+  .reader-result-stars { font-size:44px; margin-bottom:10px; }
+  .reader-result-title { font-family:'Baloo 2',cursive; font-size:24px; font-weight:900; color:var(--navy); }
+  .reader-result-sub { font-size:14px; color:#888; margin:8px 0 20px; }
+</style>
+</head>
+<body>
+
+<!-- ══ ÉCRAN D'ACCUEIL ══ -->
+<div id="login-view">
+  <!-- Hibou CSS art (inline) -->
+  <div style="font-size:72px;animation:float 3s ease-in-out infinite;margin-bottom:6px">🦉</div>
+  <div class="login-title">EduPrimaire ✨</div>
+  <div class="login-subtitle">Apprendre, c'est une aventure !</div>
+
+  <input class="login-input" id="login-name" type="text" placeholder="Ton prénom…"
+    oninput="checkLoginReady()" autocomplete="off" maxlength="20">
+
+  <div class="login-class-row">
+    <button class="login-class-btn" id="btn-ci" onclick="pickClass('CI',this)">
+      CI<span class="lc-sub">Cours d'Initiation</span>
+    </button>
+    <button class="login-class-btn" id="btn-cp" onclick="pickClass('CP',this)">
+      CP<span class="lc-sub">Cours Préparatoire</span>
+    </button>
+  </div>
+
+  <button class="login-go" id="login-go" onclick="startApp()">
+    🚀 C'est parti !
+  </button>
+</div>
+
+<div class="bg-deco"></div>
+
+<!-- ══ BIENVENUE OVERLAY ══ -->
+<div id="welcome-overlay">
+  <div class="wov-inner">
+    <div class="wov-bubble" id="wov-bubble">Bonjour !</div>
+    <div class="wov-owl">
+      <div class="hibou-float hibou-happy" id="wov-hibou">
+        <div class="h-wrap">
+          <div class="h-head"><div class="h-face"><div class="h-eyes"><div class="h-eye"><div class="h-pupil"></div></div><div class="h-eye"><div class="h-pupil"></div></div></div><div class="h-beak"></div></div></div>
+          <div class="h-torso"><div class="h-wing h-wing-l"></div><div class="h-belly"></div><div class="h-wing h-wing-r"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="header">
+    <div class="logo">Edu<span>Primaire</span> 🌟</div>
+  </div>
+
+  <!-- PROFIL -->
+  <div class="profile-bar">
+    <div class="avatar">🦁</div>
+    <div class="profile-info">
+      <div class="profile-name" id="student-name">Kofi · CP</div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-fill" style="width:20%"></div></div>
+        <div class="xp-label" id="xp-label">40 XP</div>
+      </div>
+    </div>
+    <div class="streak-badge">🔥 <span id="streak">3</span></div>
+    <div class="theta-chip" id="theta-chip">θ −1.2</div>
+  </div>
+
+  <!-- INDICATEUR VOIX -->
+  <div class="voice-indicator" onclick="toggleVoice()" id="voice-bar">
+    <div class="voice-dot" id="voice-dot"></div>
+    <div class="voice-waves" id="voice-waves">
+      <div class="wave-bar" id="wb1" style="height:4px"></div>
+      <div class="wave-bar" id="wb2" style="height:4px"></div>
+      <div class="wave-bar" id="wb3" style="height:4px"></div>
+      <div class="wave-bar" id="wb4" style="height:4px"></div>
+      <div class="wave-bar" id="wb5" style="height:4px"></div>
+    </div>
+    <div class="voice-label" id="voice-label">Appuie pour activer la voix</div>
+    <button class="voice-lang-btn" onclick="event.stopPropagation();cycleLang()" id="lang-btn">🇫🇷 FR</button>
+  </div>
+
+  <!-- VUE ACCUEIL -->
+  <div id="home-view">
+    <div class="subject-tabs">
+      <button class="stab active" id="stab-francais" onclick="selectSubject('francais')">📖 Français</button>
+      <button class="stab"        id="stab-maths"    onclick="selectSubject('maths')">🔢 Maths</button>
+    </div>
+    <div class="section-title" id="home-section-title">📚 Ton parcours</div>
+    <div class="lesson-path" id="lesson-path"></div>
+    <div class="section-title" id="stickers-section-title" style="display:none">🎖 Mes stickers</div>
+    <div class="sticker-board" id="sticker-board" style="display:none"></div>
+    <div class="section-title">🔁 Révisions SM-2</div>
+    <div id="review-list"></div>
+  </div>
+
+  <!-- VUE LECTURE -->
+  <div id="lecture-view">
+    <div class="lec-header">
+      <div>
+        <div class="lec-title-main">📖 Lecture décodable</div>
+        <div class="lec-subtitle">Choisis une leçon à lire</div>
+      </div>
+      <button onclick="navGoHome()" style="background:none;border:none;font-size:24px;cursor:pointer">✕</button>
+    </div>
+    <div id="lec-list"></div>
+  </div>
+
+  <!-- VUE READER -->
+  <div id="reader-view">
+    <div class="reader-header">
+      <button class="reader-back" onclick="closeReader()">←</button>
+      <div class="reader-title" id="reader-title">Leçon 1</div>
+      <div class="reader-step-dots" id="reader-dots"></div>
+    </div>
+    <div class="reader-card" id="reader-card"></div>
+    <button class="reader-next-btn" id="reader-next-btn" onclick="readerNextStep()">Continuer →</button>
+  </div>
+
+  <!-- VUE ALPHABET -->
+  <div id="alpha-view" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin:0">🔤 Alphabet du Bénin</div>
+      <button onclick="navGoHome()" style="background:none;border:none;font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <div class="alpha-grid" id="alpha-grid"></div>
+  </div>
+
+  <!-- SESSION -->
+  <div id="session-view" style="display:none">
+    <div class="section-title" id="session-title">Leçon 3 — La lettre t</div>
+
+    <div class="exercise-card visible" id="ex-card">
+      <div class="ex-header">
+        <div class="ex-progress-dots" id="progress-dots"></div>
+        <div class="timer-badge" id="timer-badge">⏱ 30s</div>
+      </div>
+
+      <!-- Ondes TTS animées -->
+      <div class="tts-wave" id="tts-wave">
+        <div class="tts-bar" id="tb1" style="--d:0.4s"></div>
+        <div class="tts-bar" id="tb2" style="--d:0.55s"></div>
+        <div class="tts-bar" id="tb3" style="--d:0.35s"></div>
+        <div class="tts-bar" id="tb4" style="--d:0.6s"></div>
+        <div class="tts-bar" id="tb5" style="--d:0.45s"></div>
+        <div class="tts-bar" id="tb6" style="--d:0.5s"></div>
+        <div class="tts-bar" id="tb7" style="--d:0.38s"></div>
+      </div>
+
+      <!-- Bouton écouter la consigne -->
+      <button class="listen-btn" id="listen-btn" onclick="speakQuestion()">
+        <span class="listen-icon">🔊</span>
+        <span id="listen-label">Écoute la question</span>
+      </button>
+
+      <div class="question-visual" id="q-visual">🍌</div>
+      <div class="question-text" id="q-text">Chargement...</div>
+      <div class="choices-grid" id="choices-grid"></div>
+      <div id="trace-section" style="display:none"></div>
+
+      <!-- Micro pour répondre à voix haute -->
+      <div class="mic-section" id="mic-section" style="display:none">
+        <button class="mic-btn" id="mic-btn" onclick="startListening()">
+          🎤 Dis ta réponse à voix haute
+        </button>
+        <div class="mic-result" id="mic-result"></div>
+      </div>
+
+      <div class="feedback-box" id="feedback-box">
+        <div class="feedback-icon" id="fb-icon"></div>
+        <div class="feedback-text" id="fb-text"></div>
+        <div class="feedback-expl" id="fb-expl"></div>
+      </div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Question suivante →</button>
+    </div>
+
+    <div class="result-card" id="result-card">
+      <div class="result-stars" id="result-stars">⭐⭐⭐</div>
+      <div class="result-title" id="result-title">Bravo Kofi !</div>
+      <div class="result-sub" id="result-sub"></div>
+      <div class="result-stats" id="result-stats"></div>
+      <div class="algo-box" id="algo-box"></div>
+      <button class="restart-btn" onclick="goHome()">🏠 Retour à l'accueil</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-home" onclick="navGoHome()"><span class="nav-icon">🏠</span><span class="nav-label">Accueil</span></button>
+  <button class="nav-item" id="nav-lecture" onclick="openLectureView()"><span class="nav-icon">📖</span><span class="nav-label">Lecture</span></button>
+  <button class="nav-item" id="nav-alpha" onclick="openAlphaView()"><span class="nav-icon">🔤</span><span class="nav-label">Alphabet</span></button>
+  <button class="nav-item" id="nav-stickers" onclick="openStickerBoard()"><span class="nav-icon">🎖</span><span class="nav-label">Stickers</span></button>
+  <button class="nav-item" id="nav-stats" onclick="openStatsView()"><span class="nav-icon">📊</span><span class="nav-label">Progrès</span></button>
+</div>
+
+<!-- HIBOU AGENT -->
+<div class="hibou-wrap" id="hibou-wrap" onclick="hibouClick()">
+  <div class="hibou-tip" id="hibou-tip">Tu peux le faire ! 💪</div>
+  <div class="hibou-float" id="hibou-float">
+    <div class="h-wrap">
+      <div class="h-head">
+        <div class="h-face">
+          <div class="h-eyes">
+            <div class="h-eye"><div class="h-pupil"></div></div>
+            <div class="h-eye"><div class="h-pupil"></div></div>
+          </div>
+          <div class="h-beak"></div>
+        </div>
+      </div>
+      <div class="h-torso">
+        <div class="h-wing h-wing-l"></div>
+        <div class="h-wing h-wing-r"></div>
+      </div>
+      <div class="h-belly"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANNEAU AGENT -->
+<div class="agent-overlay" id="agent-overlay" onclick="closeAgentPanel(event)">
+  <div class="agent-sheet" id="agent-sheet">
+    <div class="agent-head">
+      <div class="agent-owl-mini">🦉</div>
+      <div class="agent-head-txt">
+        <div class="agent-title">Hibou, ton assistant</div>
+        <div class="agent-sub">Clique sur un thème pour apprendre</div>
+      </div>
+      <button class="agent-close-btn" onclick="closeAgentPanel()">✕</button>
+    </div>
+    <div class="agent-tabs" id="agent-tabs"></div>
+    <div id="agent-content"></div>
+  </div>
+</div>
+
+<!-- STICKER REWARD OVERLAY -->
+<div id="sticker-overlay">
+  <div class="sticker-popup">
+    <span class="sticker-big" id="sticker-big">🥭</span>
+    <div class="sticker-title" id="sticker-name">La mangue d'or</div>
+    <div class="sticker-desc" id="sticker-desc">Pour avoir bien répondu !</div>
+    <button class="sticker-close" onclick="closeStickerOverlay()">Super ! 🎉</button>
+  </div>
+</div>
+
+<!-- TRACÉ DE LETTRE -->
+<div id="trace-modal">
+  <div class="trace-inner">
+    <div class="trace-title" id="trace-title">Trace la lettre A !</div>
+    <canvas id="trace-canvas" width="280" height="240"></canvas>
+    <div class="trace-prog-wrap"><div id="trace-prog-fill"></div></div>
+    <div class="trace-btns">
+      <button class="trace-btn tb-clear" onclick="clearTrace()">↩ Effacer</button>
+      <button class="trace-btn tb-done" onclick="closeTrace()">✓ Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DÉTAIL LETTRE (alphabet) -->
+<div id="alpha-detail">
+  <div class="alpha-detail-inner">
+    <div class="alpha-detail-ltr" id="alpha-detail-ltr">Aa</div>
+    <div id="alpha-detail-body"></div>
+    <button class="alpha-action-btn" style="background:#F0F0F0;color:#555" onclick="closeAlphaDetail()">✕ Fermer</button>
+  </div>
+</div>
+
+<div class="xp-popup" id="xp-popup">+10 XP !</div>
+
+<script src="exercises_db.js"></script>
+<script src="img_lec.js"></script>
+<script>
+// ══════════════════════════════════════════════════
+// MOTEUR VOIX — Web Speech API (TTS + STT)
+// ══════════════════════════════════════════════════
+
+const LANGS = [
+  { code: 'fr-FR', label: '🇫🇷 FR', name: 'Français' },
+  { code: 'fr-BJ', label: '🇧🇯 BJ', name: 'Bénin' },  // fallback vers fr-FR si absent
+  { code: 'en-US', label: '🇺🇸 EN', name: 'Anglais' },
+];
+let langIdx = 0;
+let voiceEnabled = false;
+let isSpeaking = false;
+let isListening = false;
+let waveInterval = null;
+let recognition = null;
+
+// Initialise la synthèse vocale
+const synth = window.speechSynthesis;
+
+function getVoice(langCode) {
+  const voices = synth.getVoices();
+  // Cherche une voix correspondant à la langue
+  return voices.find(v => v.lang === langCode)
+    || voices.find(v => v.lang.startsWith(langCode.split('-')[0]))
+    || voices[0];
+}
+
+// ─── Découpe une phrase contenant "X plus Y" (syllabes courtes ≤4 car)
+// en morceaux pour les lire avec des pauses au lieu de dire "plus"
+function splitForNaturalSpeech(text) {
+  // ex: "ta plus la, ça donne quel mot ?" → ["ta", "la, ça donne quel mot ?"]
+  // ex: "ba plus na plus ne" → ["ba","na","ne"]
+  // ex: "trois plus deux" → ["trois plus deux"] (NE PAS découper — mots longs)
+  const chainRe = /^([a-zéèêàùâîôûïüäëöœA-ZÉÈÊÀÙÂÎÔÛÏÜÄËÖŒa-z]{1,4}(?:\s+plus\s+[a-zéèêàùâîôûïüäëöœA-ZÉÈÊÀÙÂÎÔÛÏÜÄËÖŒ]{1,4})+)([\s,;.!?][\s\S]*)?$/;
+  const m = text.trim().match(chainRe);
+  if (m) {
+    const chain = m[1];
+    const rest  = m[2] ? m[2].replace(/^[\s,;]+/, '').trim() : '';
+    const sylls = chain.split(/\s+plus\s+/i).map(s => s.trim()).filter(Boolean);
+    return rest ? [...sylls, rest] : sylls;
+  }
+  return [text];
+}
+
+function _speakOne(text, rate, pitch, onEnd) {
+  const utt = new SpeechSynthesisUtterance(text);
+  const lang = LANGS[langIdx].code;
+  utt.lang  = lang;
+  utt.voice = getVoice(lang);
+  utt.rate  = rate;
+  utt.pitch = pitch;
+  utt.volume = 1;
+  utt.onstart = () => { isSpeaking = true; setVoiceState('speaking'); startWaveAnim(); };
+  utt.onend   = () => { isSpeaking = false; setVoiceState('idle'); stopWaveAnim(); onEnd && onEnd(); };
+  utt.onerror = () => { isSpeaking = false; setVoiceState('idle'); stopWaveAnim(); onEnd && onEnd(); };
+  synth.speak(utt);
+}
+
+function _speakQueue(parts, idx, onEnd) {
+  if (idx >= parts.length) { onEnd && onEnd(); return; }
+  const isLast = idx === parts.length - 1;
+  // Syllabes seules (≤4 chars) → plus lent + ton plus haut pour phonétique
+  const isSyllable = parts[idx].length <= 4 && !/\s/.test(parts[idx]);
+  _speakOne(parts[idx], isSyllable ? 0.65 : 0.78, isSyllable ? 1.25 : 1.1, () => {
+    if (isLast) { onEnd && onEnd(); return; }
+    setTimeout(() => _speakQueue(parts, idx + 1, onEnd), isSyllable ? 380 : 120);
+  });
+}
+
+function speak(text, onEnd) {
+  if (!synth) return onEnd && onEnd();
+  synth.cancel();
+  const parts = splitForNaturalSpeech(text);
+  _speakQueue(parts, 0, onEnd);
+}
+
+function spellOut(word) {
+  const letters = word.split('');
+  _speakQueue(letters, 0);
+}
+
+function setVoiceState(state) {
+  const dot = document.getElementById('voice-dot');
+  const label = document.getElementById('voice-label');
+  dot.className = 'voice-dot' + (state === 'speaking' ? ' speaking' : state === 'listening' ? ' listening' : '');
+  if (state === 'speaking') label.textContent = 'Je parle...';
+  else if (state === 'listening') label.textContent = 'J\'écoute ta réponse...';
+  else label.textContent = voiceEnabled ? 'Voix activée ✓' : 'Appuie pour activer la voix';
+}
+
+function startWaveAnim() {
+  const bars = ['wb1','wb2','wb3','wb4','wb5'];
+  const ttsB = ['tb1','tb2','tb3','tb4','tb5','tb6','tb7'];
+  ttsB.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('active'); });
+  let t = 0;
+  waveInterval = setInterval(() => {
+    t++;
+    bars.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.style.height = (4 + 14 * Math.abs(Math.sin((t + i * 2) * 0.4))) + 'px';
+    });
+  }, 80);
+}
+
+function stopWaveAnim() {
+  clearInterval(waveInterval);
+  ['wb1','wb2','wb3','wb4','wb5'].forEach(id => { const el = document.getElementById(id); if (el) el.style.height = '4px'; });
+  ['tb1','tb2','tb3','tb4','tb5','tb6','tb7'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+}
+
+function toggleVoice() {
+  if (!synth) { alert('Voix non supportée sur ce navigateur. Essaie Chrome.'); return; }
+  voiceEnabled = !voiceEnabled;
+  setVoiceState('idle');
+  if (voiceEnabled) {
+    speak('Bonjour ! Je suis prêt à t\'aider à apprendre.');
+  } else {
+    synth.cancel();
+  }
+}
+
+function cycleLang() {
+  langIdx = (langIdx + 1) % LANGS.length;
+  document.getElementById('lang-btn').textContent = LANGS[langIdx].label;
+  if (voiceEnabled) speak('Langue changée : ' + LANGS[langIdx].name);
+}
+
+// ══════════════════════════════════════════════════
+// RECONNAISSANCE VOCALE — Speech-to-Text
+// ══════════════════════════════════════════════════
+
+function initRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.lang = LANGS[langIdx].code;
+  r.continuous = false;
+  r.interimResults = true;
+  r.maxAlternatives = 3;
+  return r;
+}
+
+function startListening() {
+  if (isListening) { stopListening(); return; }
+  recognition = initRecognition();
+  if (!recognition) {
+    alert('Reconnaissance vocale non disponible. Essaie Chrome sur Android.');
+    return;
+  }
+  isListening = true;
+  const btn = document.getElementById('mic-btn');
+  const result = document.getElementById('mic-result');
+  btn.className = 'mic-btn listening-active';
+  btn.innerHTML = '🔴 En écoute... (appuie pour arrêter)';
+  setVoiceState('listening');
+  result.className = 'mic-result show';
+  result.textContent = '🎤 ...';
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript).join('').trim().toLowerCase();
+    result.textContent = '🎤 "' + transcript + '"';
+
+    // Vérifie si la réponse vocale correspond à un choix
+    if (e.results[0].isFinal) {
+      matchVoiceAnswer(transcript);
+    }
+  };
+  recognition.onend = () => stopListening();
+  recognition.onerror = () => stopListening();
+  recognition.start();
+}
+
+function stopListening() {
+  isListening = false;
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+  const btn = document.getElementById('mic-btn');
+  btn.className = 'mic-btn';
+  btn.innerHTML = '🎤 Dis ta réponse à voix haute';
+  setVoiceState('idle');
+}
+
+function matchVoiceAnswer(transcript) {
+  // Compare la réponse vocale aux choix disponibles
+  const ex = sessionExercises[currentExIdx];
+  if (!ex) return;
+  let bestIdx = -1;
+  let bestScore = 0;
+  ex.choices.forEach((choice, i) => {
+    const choiceClean = choice.toLowerCase().trim();
+    // Score de similarité simple
+    let score = 0;
+    if (transcript === choiceClean) score = 10;
+    else if (transcript.includes(choiceClean)) score = 7;
+    else if (choiceClean.includes(transcript)) score = 5;
+    else {
+      // Levenshtein simplifié
+      const common = [...choiceClean].filter(c => transcript.includes(c)).length;
+      score = common / choiceClean.length * 4;
+    }
+    if (score > bestScore) { bestScore = score; bestIdx = i; }
+  });
+
+  if (bestScore >= 4 && bestIdx >= 0) {
+    stopListening();
+    setTimeout(() => answer(bestIdx, true), 300);
+  } else {
+    const result = document.getElementById('mic-result');
+    result.textContent = '🎤 "' + transcript + '" — Je n\'ai pas compris, réessaie ou touche le bouton';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RASCH ALGORITHM
+// ══════════════════════════════════════════════════
+
+const student = {
+  name: '', classe: 'CI',
+  theta: -2.0,          // niveau initial CI (vrai débutant)
+  theta_by_topic: {},
+  xp: 0, streak: 0,
+  responses: [],
+  session_correct: 0, session_total: 0, session_times: [],
+  done_lessons: new Set(),
+};
+
+function raschProb(theta, b) { return 1 / (1 + Math.exp(-(theta - b))); }
+
+function estimateTheta(responses, prior = 0) {
+  if (!responses.length) return prior;
+  let theta = prior;
+  for (let i = 0; i < 50; i++) {
+    let grad = -(theta - prior), info = 1;
+    for (const r of responses) { const p = raschProb(theta, r.b); grad += r.correct ? (1-p) : -p; info += p*(1-p); }
+    const step = grad / info;
+    theta = Math.max(-4, Math.min(4, theta + step));
+    if (Math.abs(step) < 0.001) break;
+  }
+  return theta;
+}
+
+function fisherInfo(theta, b) { const p = raschProb(theta, b); return p * (1-p); }
+
+// ══════════════════════════════════════════════════
+// BANQUE EXERCICES — chargée depuis exercises_db.js
+// ══════════════════════════════════════════════════
+
+const exerciseBank = (typeof EXERCISES_DB !== 'undefined') ? EXERCISES_DB.exercises : [];
+
+// ══════════════════════════════════════════════════
+// ÉTAT ÉTUDIANT — nom, classe, login
+// ══════════════════════════════════════════════════
+
+let _selectedClass = null;
+
+function pickClass(cls, btn) {
+  _selectedClass = cls;
+  document.querySelectorAll('.login-class-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  checkLoginReady();
+}
+
+function checkLoginReady() {
+  const name = document.getElementById('login-name').value.trim();
+  const go = document.getElementById('login-go');
+  if (name.length >= 1 && _selectedClass) {
+    go.classList.add('ready');
+  } else {
+    go.classList.remove('ready');
+  }
+}
+
+function startApp() {
+  const name = document.getElementById('login-name').value.trim();
+  if (!name || !_selectedClass) return;
+
+  // Mettre à jour l'état étudiant
+  student.name = name;
+  student.classe = _selectedClass;
+
+  // Mettre à jour l'en-tête profil
+  document.getElementById('student-name').textContent = name + ' · ' + _selectedClass;
+
+  // Cacher login
+  const lv = document.getElementById('login-view');
+  lv.style.animation = 'fade-out-ov 0.4s ease forwards';
+  setTimeout(() => { lv.style.display = 'none'; }, 400);
+
+  // Montrer welcome overlay
+  showWelcome(name, _selectedClass);
+}
+
+function showWelcome(name, cls) {
+  const overlay = document.getElementById('welcome-overlay');
+  const bubble  = document.getElementById('wov-bubble');
+
+  const greetings = [
+    `Bonjour ${name} ! 🎉\nBienvenue en ${cls} !`,
+    `Salut ${name} !\nOn va apprendre ensemble \n🦉`,
+    `Eh ${name}, content de te voir ! 😊\nPrêt pour l'aventure en ${cls} ?`,
+  ];
+  const msg = greetings[Math.floor(Math.random() * greetings.length)];
+  bubble.textContent = msg;
+
+  overlay.classList.add('show');
+
+  // Lire le message à voix haute si activée
+  const spokenMsg = `Bonjour ${name} ! Bienvenue en ${cls} ! Je suis Hibou, ton copain. On va apprendre ensemble !`;
+  if (voiceEnabled) speak(spokenMsg);
+
+  // Après 4.5s (ou 5s si voix active), fermer
+  const delay = voiceEnabled ? 5200 : 3800;
+  setTimeout(hideWelcome, delay);
+}
+
+function hideWelcome() {
+  const overlay = document.getElementById('welcome-overlay');
+  overlay.classList.add('hide');
+  setTimeout(() => {
+    overlay.classList.remove('show', 'hide');
+    overlay.style.display = 'none';
+    // Bouton Lecture visible uniquement pour CP
+    const navLec = document.getElementById('nav-lecture');
+    if (navLec) navLec.style.display = student.classe === 'CP' ? '' : 'none';
+    document.getElementById('home-view').style.display = 'block';
+    setActiveNav('nav-home');
+    selectSubject('francais');
+    refreshStickerBoard();
+    if (voiceEnabled) setTimeout(() => speak('Choisis ta première leçon !'), 600);
+  }, 500);
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION — sujets & leçons
+// ══════════════════════════════════════════════════
+
+let currentSubject = 'francais';
+let currentLessonId = null;
+
+function selectSubject(sub) {
+  currentSubject = sub;
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('stab-' + sub);
+  if (btn) btn.classList.add('active');
+  renderLessonGrid(sub);
+}
+
+function renderLessonGrid(sub) { renderLessonPath(sub); }
+
+function renderLessonPath(sub) {
+  const pathEl = document.getElementById('lesson-path');
+  const title  = document.getElementById('home-section-title');
+  if (!pathEl) return;
+
+  if (typeof EXERCISES_DB === 'undefined') {
+    pathEl.innerHTML = '<div style="padding:20px;text-align:center;color:#888">Chargement…</div>';
+    return;
+  }
+
+  let lessons = EXERCISES_DB.getLessonsBySubject
+    ? EXERCISES_DB.getLessonsBySubject(sub)
+    : EXERCISES_DB.lessons.filter(l => l.sub === sub);
+
+  // Filtrer par classe : CI voit uniquement les leçons CI, CP voit toutes
+  if (student.classe === 'CI') {
+    lessons = lessons.filter(l => !l.classe || l.classe === 'CI');
+  }
+
+  const classeLabel = student.classe === 'CP' ? 'CP' : 'CI';
+  if (title) title.textContent = sub === 'francais'
+    ? `📖 Ton parcours Français ${classeLabel}`
+    : `🔢 Ton parcours Maths ${classeLabel}`;
+
+  // Positions alternantes : droite → centre → gauche → centre → …
+  // margin-left par rapport au centre du conteneur
+  const offsets = [60, 0, -60, 0]; // pixels de décalage
+
+  let html = '';
+  lessons.forEach((lesson, i) => {
+    const mainTopic = lesson.topics ? lesson.topics[0] : lesson.topic;
+    const topicTheta = student.theta_by_topic[mainTopic] ?? student.theta;
+    const locked  = topicTheta < (lesson.unlock_theta ?? -3);
+    const done    = student.done_lessons.has(lesson.id);
+    // Premier non-fait et non-bloqué = "current"
+    const isCurrent = !locked && !done;
+    const exList  = EXERCISES_DB.getByLesson ? EXERCISES_DB.getByLesson(lesson.id) : [];
+    const offset  = offsets[i % offsets.length];
+    const labelSide = offset >= 0 ? 'right' : 'left';
+
+    // Connecteur entre les nœuds
+    if (i > 0) {
+      const prevDone = student.done_lessons.has(lessons[i-1].id);
+      html += `<div class="path-connector-v${prevDone?' done':''}"></div>`;
+    }
+
+    const nodeClass = 'path-node' + (locked ? ' pn-locked' : done ? ' pn-done' : isCurrent ? ' pn-current' : '');
+    const badge = locked
+      ? `<div class="pn-badge lk">🔒</div>`
+      : done
+        ? `<div class="pn-badge ok">✓</div>`
+        : isCurrent
+          ? `<div class="pn-badge curr">▶</div>` : '';
+    const onclick = locked ? '' : `onclick="startSession('${lesson.id}')"`;
+
+    // Label affiché à gauche ou droite du nœud
+    const label = `<div class="path-node-label" style="order:${labelSide==='right'?2:0}">
+        <div class="pnl-title">${lesson.title}</div>
+        <div class="pnl-meta">${exList.length} ex · Leçon ${lesson.num}</div>
+      </div>`;
+    const spacer = `<div style="flex:1;max-width:20px"></div>`;
+
+    html += `<div class="path-step" style="align-self:${offset>0?'flex-end':offset<0?'flex-start':'center'};padding:0 ${Math.abs(offset)/4}px">
+      <div class="path-node-wrap">
+        ${labelSide==='left' ? label + spacer : spacer + label}
+        <div class="${nodeClass}" ${onclick}>
+          <div class="pn-num-lbl">L${lesson.num}</div>
+          <div class="pn-icon">${lesson.icon||'📚'}</div>
+          ${badge}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  pathEl.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// SESSION
+// ══════════════════════════════════════════════════
+
+let sessionExercises = [];
+let currentExIdx = 0;
+let timer = null, timeLeft = 30, answerGiven = false;
+
+function selectExercises(lessonId, n = 5) {
+  let pool;
+  if (lessonId && typeof EXERCISES_DB !== 'undefined' && EXERCISES_DB.getByLesson) {
+    pool = EXERCISES_DB.getByLesson(lessonId);
+  }
+  if (!pool || !pool.length) pool = exerciseBank;
+
+  const lesson = (lessonId && EXERCISES_DB && EXERCISES_DB.getLessonById) ? EXERCISES_DB.getLessonById(lessonId) : null;
+  const topic = lesson ? (lesson.topics ? lesson.topics[0] : lesson.topic) : null;
+  const theta = (topic && student.theta_by_topic[topic] !== undefined) ? student.theta_by_topic[topic] : student.theta;
+
+  const scored = pool.map(e => ({ ex: e, info: fisherInfo(theta, e.b) }))
+    .sort((a, b) => b.info - a.info);
+
+  // Garantir la variété des types
+  const byType = {};
+  scored.forEach(s => { const t = s.ex.type || 'mcq'; (byType[t] = byType[t] || []).push(s.ex); });
+  const result = [];
+  // Toujours inclure 1 trace si disponible
+  if (byType.trace && byType.trace.length) result.push(byType.trace[0]);
+  // 1 relier si disponible
+  if (byType.relier && byType.relier.length && result.length < n) result.push(byType.relier[0]);
+  // 1 entourer si disponible
+  if (byType.entourer && byType.entourer.length && result.length < n) result.push(byType.entourer[0]);
+  // Compléter avec MCQ triés par Fisher
+  const usedIds = new Set(result.map(e => e.id));
+  const mcqPool = scored.filter(s => !usedIds.has(s.ex.id));
+  const needed = n - result.length;
+  mcqPool.slice(0, Math.min(needed + 2, mcqPool.length))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, needed)
+    .forEach(s => result.push(s.ex));
+
+  // Mélanger l'ordre final sauf si un seul type
+  return result.sort(() => Math.random() - 0.5);
+}
+
+function startSession(lessonId) {
+  currentLessonId = lessonId || null;
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('session-view').style.display = 'block';
+  document.getElementById('result-card').classList.remove('visible');
+  document.getElementById('ex-card').classList.add('visible');
+  student.session_correct = 0; student.session_total = 0; student.session_times = [];
+  sessionExercises = selectExercises(currentLessonId, 5);
+  currentExIdx = 0;
+  if (voiceEnabled) speak('Super ! Commençons la leçon. Je vais te lire chaque question.');
+  setTimeout(() => { renderProgressDots(); renderQuestion(); }, voiceEnabled ? 2500 : 0);
+}
+
+function renderProgressDots() {
+  document.getElementById('progress-dots').innerHTML = sessionExercises.map((_, i) => {
+    let cls = i < currentExIdx ? 'dot-ex done' : i === currentExIdx ? 'dot-ex current' : 'dot-ex';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+// ── Labels pour les types d'exercice ──
+const EX_TYPE_LABELS = {
+  mcq:      {icon:'🔘', label:'QCM'},
+  trace:    {icon:'✏️', label:'Trace'},
+  relier:   {icon:'🔗', label:'Relier'},
+  entourer: {icon:'⭕', label:'Entourer'},
+};
+
+function renderQuestion() {
+  if (currentExIdx >= sessionExercises.length) { showResult(); return; }
+  answerGiven = false;
+  const ex = sessionExercises[currentExIdx];
+  const type = ex.type || 'mcq';
+
+  // Badge type
+  const tl = EX_TYPE_LABELS[type] || EX_TYPE_LABELS.mcq;
+  document.getElementById('q-visual').textContent =
+    type === 'trace' ? (ex.letter || '?').toUpperCase()
+    : ex.visual || (type === 'relier' ? '🔗' : '⭕');
+  document.getElementById('q-text').innerHTML =
+    `<span class="ex-type-badge">${tl.icon} ${tl.label}</span><br>` + karaokify(ex.question);
+  document.getElementById('feedback-box').className = 'feedback-box';
+  document.getElementById('next-btn').classList.remove('visible');
+  document.getElementById('trace-section').style.display = 'none';
+  document.getElementById('mic-section').style.display = 'none';
+
+  const listenBtn = document.getElementById('listen-btn');
+  listenBtn.classList.remove('playing');
+  document.getElementById('listen-label').textContent = 'Écoute la question';
+
+  const grid = document.getElementById('choices-grid');
+  grid.style.gridTemplateColumns = '';
+
+  // ── Dispatch par type ──
+  if (type === 'trace')    { renderTraceExercise(ex, grid); }
+  else if (type === 'relier')   { renderRelierExercise(ex, grid); }
+  else if (type === 'entourer') { renderEntourerExercise(ex, grid); }
+  else { renderMCQExercise(ex, grid); }
+
+  // Micro (MCQ phrase/mots seulement)
+  if (type === 'mcq' && voiceEnabled && (ex.topic === 'phrase' || ex.topic === 'mots_outils')) {
+    document.getElementById('mic-section').style.display = 'block';
+    document.getElementById('mic-result').className = 'mic-result';
+  }
+
+  startTimer();
+  renderProgressDots();
+  if (voiceEnabled) setTimeout(() => { speak(ex.audioQuestion); triggerKaraoke('q-text'); }, 400);
+  HibouAgent.onNewQuestion(ex);
+}
+
+// ─── MCQ ───────────────────────────────────────────
+function renderMCQExercise(ex, grid) {
+  grid.style.display = '';
+  grid.innerHTML = ex.choices.map((c, i) =>
+    `<button class="choice-btn" onclick="answer(${i})" onmouseenter="hoverChoice(${i})">
+      ${c}<span class="choice-sound">🔊</span>
+    </button>`
+  ).join('');
+}
+
+// ─── TRACE ────────────────────────────────────────
+function renderTraceExercise(ex, grid) {
+  grid.style.display = 'none';
+  const letter = ex.letter || 'A';
+  const sec = document.getElementById('trace-section');
+  sec.style.display = 'block';
+  sec.innerHTML = `
+    <canvas id="trace-inline-canvas" width="280" height="220"></canvas>
+    <p class="trace-inline-hint">Trace avec ton doigt — ferme quand c'est bien !</p>
+    <div class="trace-prog-wrap"><div id="trace-inline-fill" style="width:0%;height:100%;background:linear-gradient(90deg,var(--sky),var(--leaf));border-radius:6px;transition:width 0.15s"></div></div>
+    <button class="trace-btn tb-clear" style="width:100%;margin-top:8px" onclick="_clearInlineTrace()">↩ Recommencer</button>
+  `;
+  _startInlineTrace(letter);
+}
+
+let _inlineTraceState = null;
+function _startInlineTrace(letter) {
+  const canvas = document.getElementById('trace-inline-canvas');
+  if (!canvas) return;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.font = 'bold 160px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(78,205,196,0.2)'; ctx.fillText(letter.toUpperCase(),W/2,H/2);
+  ctx.font='bold 65px sans-serif'; ctx.fillStyle='rgba(78,205,196,0.12)';
+  ctx.fillText(letter.toLowerCase(),W*0.8,H*0.78);
+
+  const GRID=12, cW=W/GRID, cH=H/GRID;
+  const img=ctx.getImageData(0,0,W,H);
+  const targets=new Set();
+  for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) {
+    const px=Math.floor((c+.5)*cW),py=Math.floor((r+.5)*cH);
+    if(img.data[(py*W+px)*4+3]>15) targets.add(r*GRID+c);
+  }
+  const drawn=new Set();
+  let drawing=false,lastP=null;
+  function gp(e){const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(W/r.width),y:(s.clientY-r.top)*(H/r.height)};}
+  function mk(x,y){const c=Math.floor(x/cW),r=Math.floor(y/cH);[[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([dc,dr])=>{const cc=c+dc,rr=r+dr;if(cc>=0&&cc<GRID&&rr>=0&&rr<GRID)drawn.add(rr*GRID+cc);});}
+  function st(x,y){ctx.beginPath();if(lastP){ctx.moveTo(lastP.x,lastP.y);ctx.lineTo(x,y);}else{ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();}ctx.strokeStyle='rgba(78,205,196,0.8)';ctx.lineWidth=22;ctx.lineCap='round';ctx.stroke();lastP={x,y};mk(x,y);_updateInlineProg(targets,drawn);}
+  canvas.onmousedown=canvas.ontouchstart=(e)=>{e.preventDefault();drawing=true;lastP=null;st(...Object.values(gp(e)));};
+  canvas.onmousemove=canvas.ontouchmove=(e)=>{e.preventDefault();if(drawing)st(...Object.values(gp(e)));};
+  canvas.onmouseup=canvas.ontouchend=(e)=>{e.preventDefault();drawing=false;lastP=null;};
+  _inlineTraceState={ctx,W,H,GRID,cW,cH,targets,drawn,letter};
+}
+function _updateInlineProg(targets,drawn) {
+  const fill=document.getElementById('trace-inline-fill'); if(!fill)return;
+  const pct=targets.size?Math.round(100*[...targets].filter(c=>drawn.has(c)).length/targets.size):0;
+  fill.style.width=pct+'%';
+  if(pct>=72){
+    playJingle('trace'); HibouAgent.setState('happy'); HibouAgent.say('Belle écriture ! 🎉',2500);
+    if(voiceEnabled) speak('Bravo ! Tu as bien tracé la lettre !');
+    setTimeout(()=>answer({correct:true, expl:'Belle lettre !', audioExpl:'Bravo, tu as bien tracé la lettre !'}),800);
+  }
+}
+function _clearInlineTrace() {
+  if(!_inlineTraceState)return;
+  const{ctx,W,H,targets,drawn,letter}=_inlineTraceState;
+  drawn.clear(); ctx.clearRect(0,0,W,H);
+  const f=document.getElementById('trace-inline-fill'); if(f) f.style.width='0%';
+  ctx.font='bold 160px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(78,205,196,0.2)';ctx.fillText(letter.toUpperCase(),W/2,H/2);
+  ctx.font='bold 65px sans-serif';ctx.fillStyle='rgba(78,205,196,0.12)';
+  ctx.fillText(letter.toLowerCase(),W*0.8,H*0.78);
+}
+
+// ─── RELIER ───────────────────────────────────────
+let _relierState = null;
+function renderRelierExercise(ex, grid) {
+  grid.style.display = 'none';
+  const pairs = ex.pairs;
+  // Mélanger la colonne droite
+  const rightIdx = [...Array(pairs.length).keys()].sort(() => Math.random()-.5);
+  const COLORS = ['#FF6B6B','#4ECDC4','#C77DFF','#FFE66D','#6BCB77'];
+  _relierState = { pairs, rightIdx, paired: new Map(), selected: null, colors: COLORS };
+
+  const sec = document.getElementById('trace-section');
+  sec.style.display = 'block';
+  sec.innerHTML = `
+    <div class="relier-wrap">
+      <div class="relier-col" id="relier-left">
+        ${pairs.map((p,i) => `
+          <div class="relier-item" id="rl${i}" onclick="_relierLeft(${i})">
+            <span class="rl-txt">${p.left}</span>
+          </div>`).join('')}
+      </div>
+      <div class="relier-mid">${pairs.map(()=>`<div class="relier-dot"></div>`).join('')}</div>
+      <div class="relier-col" id="relier-right">
+        ${rightIdx.map((oi,ri) => `
+          <div class="relier-item" id="rr${ri}" data-oi="${oi}" onclick="_relierRight(${ri})">
+            <span class="rl-icon">${pairs[oi].right}</span>
+            <span class="rl-sub">${pairs[oi].rightWord}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button id="relier-val" class="relier-validate" onclick="_relierValidate()">✓ Valider</button>
+  `;
+}
+
+function _relierLeft(li) {
+  if(_relierState.paired.has(li)) return;
+  _relierState.selected = li;
+  document.querySelectorAll('.relier-item[id^="rl"]').forEach((el,i)=>el.classList.toggle('rl-selected',i===li));
+}
+function _relierRight(ri) {
+  const {pairs, rightIdx, paired, selected, colors} = _relierState;
+  if(selected===null) return;
+  // Dépaire si déjà utilisé
+  for(const[k,v] of paired){if(v===ri){paired.delete(k);const old=document.getElementById('rl'+k);old.style.cssText='';document.getElementById('rr'+v).style.cssText='';break;}}
+  paired.set(selected, ri);
+  const col = colors[selected % colors.length];
+  const lEl=document.getElementById('rl'+selected), rEl=document.getElementById('rr'+ri);
+  lEl.style.borderColor=col; lEl.style.background=col+'22'; lEl.classList.remove('rl-selected');
+  rEl.style.borderColor=col; rEl.style.background=col+'22';
+  _relierState.selected=null;
+  document.querySelectorAll('.relier-item[id^="rl"]').forEach(el=>el.classList.remove('rl-selected'));
+  if(paired.size===pairs.length) document.getElementById('relier-val').style.display='block';
+}
+function _relierValidate() {
+  const{pairs, rightIdx, paired}=_relierState;
+  let ok=true;
+  for(const[li,ri] of paired){
+    const oi=parseInt(document.getElementById('rr'+ri).dataset.oi);
+    if(oi!==li) ok=false;
+  }
+  answer({correct:ok, expl: ok?'Toutes les liaisons sont correctes !':'Certaines liaisons ne sont pas bonnes. Regarde bien !', audioExpl: ok?'Bravo ! Tu as tout bien relié !':'Pas tout à fait. Écoute les corrections.'});
+}
+
+// ─── ENTOURER ─────────────────────────────────────
+let _entourerState = null;
+function renderEntourerExercise(ex, grid) {
+  grid.style.display = 'none';
+  const items = ex.items;
+  _entourerState = { items, selected: new Set() };
+
+  const sec = document.getElementById('trace-section');
+  sec.style.display = 'block';
+  sec.innerHTML = `
+    <div class="entourer-grid">
+      ${items.map((it,i) => `
+        <div class="entourer-item" id="ei${i}" onclick="_entourerToggle(${i})">
+          <span class="entourer-label">${it.label}</span>
+          ${it.sublabel ? `<span class="entourer-sub">${it.sublabel}</span>` : ''}
+        </div>`).join('')}
+    </div>
+    <button class="entourer-validate" onclick="_entourerValidate()">✓ Valider</button>
+  `;
+}
+function _entourerToggle(i) {
+  const {selected}=_entourerState;
+  const el=document.getElementById('ei'+i);
+  if(selected.has(i)){selected.delete(i);el.classList.remove('encercle');}
+  else{selected.add(i);el.classList.add('encercle');playJingle('correct');}
+}
+function _entourerValidate() {
+  const{items,selected}=_entourerState;
+  let allOk=true;
+  items.forEach((it,i)=>{
+    const el=document.getElementById('ei'+i);
+    el.onclick=null;
+    if(selected.has(i)&&it.correct){el.classList.remove('encercle');el.classList.add('ev-ok');}
+    else if(selected.has(i)&&!it.correct){el.classList.remove('encercle');el.classList.add('ev-wrong');allOk=false;}
+    else if(!selected.has(i)&&it.correct){el.classList.add('ev-miss');allOk=false;}
+  });
+  const nbCorrect=items.filter((it,i)=>it.correct&&selected.has(i)).length;
+  const nbTotal=items.filter(it=>it.correct).length;
+  answer({correct:allOk, expl:`${nbCorrect}/${nbTotal} bonne${nbTotal>1?'s':''} réponse${nbTotal>1?'s':''}.`, audioExpl:allOk?'Bravo, tu as tout entouré correctement !':'Regarde les éléments en rouge — ils méritent d\'être entourés !'});
+}
+
+function speakQuestion() {
+  const ex = sessionExercises[currentExIdx];
+  if (!ex) return;
+  const btn = document.getElementById('listen-btn');
+  btn.classList.add('playing');
+  document.getElementById('listen-label').textContent = 'En cours...';
+  speak(ex.audioQuestion, () => {
+    btn.classList.remove('playing');
+    document.getElementById('listen-label').textContent = 'Écoute la question';
+  });
+}
+
+function hoverChoice(idx) {
+  // Lecture du choix au survol/focus pour accessibilité
+  if (!voiceEnabled) return;
+  const ex = sessionExercises[currentExIdx];
+  if (ex && !answerGiven) {
+    // court délai pour éviter de tout lire en passant
+    clearTimeout(window._hoverTimer);
+    window._hoverTimer = setTimeout(() => speak(ex.choiceAudio[idx]), 300);
+  }
+}
+
+function startTimer() {
+  clearInterval(timer); timeLeft = 30;
+  const badge = document.getElementById('timer-badge');
+  badge.textContent = '⏱ 30s'; badge.style.background = '#FFF3CD';
+  timer = setInterval(() => {
+    timeLeft--;
+    badge.textContent = `⏱ ${timeLeft}s`;
+    if (timeLeft <= 10) badge.style.background = '#F8D7DA';
+    if (timeLeft === 10 && voiceEnabled) speak('Dix secondes !');
+    if (timeLeft <= 0) { clearInterval(timer); if (!answerGiven) answer(-1); }
+  }, 1000);
+}
+
+function answer(chosen, fromVoice = false) {
+  if (answerGiven) return;
+  answerGiven = true;
+  clearInterval(timer);
+  stopListening();
+
+  const ex = sessionExercises[currentExIdx];
+  const timeSpent = 30 - timeLeft;
+
+  // Normalise le résultat : MCQ → objet
+  const isComplex = typeof chosen === 'object' && chosen !== null;
+  const isTimeout = chosen === -1;
+  let correct, explText, audioExplText;
+  if (isTimeout) {
+    correct = false; explText = ex.expl; audioExplText = ex.audioExpl;
+  } else if (isComplex) {
+    correct = chosen.correct; explText = chosen.expl; audioExplText = chosen.audioExpl;
+  } else {
+    correct = chosen === ex.correct; explText = ex.expl; audioExplText = ex.audioExpl;
+    // Feedback visuel MCQ
+    document.querySelectorAll('.choice-btn').forEach((b, i) => {
+      b.onclick = null; b.onmouseenter = null;
+      if (i === ex.correct) b.classList.add('correct');
+      else if (i === chosen && !correct) b.classList.add('wrong');
+    });
+  }
+
+  const fb = document.getElementById('feedback-box');
+  const fbIcon = document.getElementById('fb-icon');
+  const fbText = document.getElementById('fb-text');
+  const fbExpl = document.getElementById('fb-expl');
+
+  let audioMsg = '';
+  if (isTimeout) {
+    fb.className = 'feedback-box ko';
+    fbIcon.textContent = '⏰'; fbText.textContent = 'Temps écoulé !'; fbExpl.textContent = explText;
+    audioMsg = 'Oh non, le temps est écoulé ! ' + audioExplText;
+    playJingle('wrong');
+    HibouAgent.onTimeout();
+  } else if (correct) {
+    fb.className = 'feedback-box ok';
+    const fast = !isComplex && timeSpent < 10;
+    fbIcon.textContent = fast ? '⚡ Super rapide !' : '✅ Bravo !';
+    fbText.textContent = fast ? 'Réponse éclair !' : 'C\'est correct !';
+    fbExpl.textContent = explText;
+    audioMsg = (fast ? 'Incroyable, quelle rapidité ! ' : 'Bravo ! ') + audioExplText;
+    showXpPopup(fast ? '+15 XP ⚡' : '+10 XP');
+    student.xp += fast ? 15 : 10;
+    student.session_correct++;
+    if (fromVoice && !isComplex && ex.choices) audioMsg = 'Tu as dit ' + ex.choices[chosen] + '. ' + audioMsg;
+    playJingle('correct');
+    HibouAgent.onCorrect(ex, fast);
+  } else {
+    fb.className = 'feedback-box ko';
+    fbIcon.textContent = '💡'; fbText.textContent = 'Pas tout à fait...'; fbExpl.textContent = explText;
+    audioMsg = 'Ce n\'est pas tout à fait ça. ' + audioExplText;
+    if (!isComplex && ex.choices) audioMsg += ' Écoute bien la bonne réponse : ' + ex.choices[ex.correct];
+    playJingle('wrong');
+    HibouAgent.onWrong(ex);
+  }
+
+  if (voiceEnabled) speak(audioMsg);
+
+  student.responses.push({ b: ex.b, correct, topic: ex.topic });
+  student.session_times.push(timeSpent);
+  student.session_total++;
+  student.theta = estimateTheta(student.responses.slice(-20), student.theta);
+  if (ex.topic) {
+    const tr = student.responses.filter(r => r.topic === ex.topic).slice(-10);
+    student.theta_by_topic[ex.topic] = estimateTheta(tr, student.theta_by_topic[ex.topic] ?? student.theta);
+  }
+  updateUI();
+  document.getElementById('next-btn').classList.add('visible');
+}
+
+function nextQuestion() {
+  currentExIdx++;
+  if (voiceEnabled) synth.cancel();
+  if (currentExIdx >= sessionExercises.length) showResult();
+  else renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('ex-card').classList.remove('visible');
+  const result = document.getElementById('result-card');
+  result.classList.add('visible');
+  const pct = Math.round(100 * student.session_correct / Math.max(1, student.session_total));
+  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 50 ? '⭐⭐' : '⭐';
+  const title = pct >= 80 ? 'Excellent !' : pct >= 50 ? 'Bien joué !' : 'Continue !';
+  document.getElementById('result-stars').textContent = stars;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-sub').textContent = `${student.session_correct}/${student.session_total} bonnes réponses`;
+  const avgTime = student.session_times.length ? Math.round(student.session_times.reduce((a,b)=>a+b,0)/student.session_times.length) : 0;
+  document.getElementById('result-stats').innerHTML = `
+    <div class="rstat"><div class="rstat-val">${pct}%</div><div class="rstat-label">Réussite</div></div>
+    <div class="rstat"><div class="rstat-val">${avgTime}s</div><div class="rstat-label">Temps moy.</div></div>
+    <div class="rstat"><div class="rstat-val">${student.theta.toFixed(1)}</div><div class="rstat-label">Niveau θ</div></div>`;
+  const level = student.theta < -1.5 ? 'Débutant' : student.theta < -0.5 ? 'En progression' : student.theta < 0.5 ? 'Moyen' : 'Bon';
+  document.getElementById('algo-box').innerHTML = `
+    <div class="algo-title">🧠 CE QUE L'ALGO A APPRIS</div>
+    <div class="algo-row"><span class="algo-key">Niveau θ</span><span class="algo-val">${student.theta.toFixed(2)}</span></div>
+    <div class="algo-row"><span class="algo-key">Profil</span><span class="algo-val">${level}</span></div>
+    <div class="algo-row"><span class="algo-key">Révision SM-2</span><span class="algo-val">${pct>=80?'Dans 6 jours':pct>=50?'Dans 3 jours':'Demain'}</span></div>
+    <div class="algo-row"><span class="algo-key">XP total</span><span class="algo-val">${student.xp} XP</span></div>`;
+  student.streak++;
+  document.getElementById('streak').textContent = student.streak;
+  if (currentLessonId && pct >= 60) student.done_lessons.add(currentLessonId);
+  // Sticker après délai (laisser le résultat s'afficher d'abord)
+  setTimeout(() => earnSticker(pct), 2200);
+  if (voiceEnabled) {
+    const msg = pct >= 80
+      ? `Félicitations ! Tu as réussi ${student.session_correct} exercices sur ${student.session_total}. Ton niveau a progressé. Continue comme ça !`
+      : pct >= 50
+      ? `Bien joué ! Tu progresses. Reviens demain pour t'améliorer encore.`
+      : `C'est bien d'essayer. Chaque erreur est un apprentissage. Tu vas y arriver !`;
+    setTimeout(() => speak(msg), 500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════
+
+function updateUI() {
+  const pct = Math.min(100, Math.round(100 * student.xp / 200));
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-label').textContent = student.xp + ' XP';
+  document.getElementById('theta-chip').textContent = 'θ ' + (student.theta >= 0 ? '+' : '') + student.theta.toFixed(1);
+}
+
+function showXpPopup(txt) {
+  const p = document.getElementById('xp-popup');
+  p.textContent = txt; p.style.display = 'block'; p.style.animation = 'none';
+  requestAnimationFrame(() => { p.style.animation = 'xp-fly 1.5s cubic-bezier(.34,1.56,.64,1) forwards'; });
+  setTimeout(() => { p.style.display = 'none'; }, 1600);
+}
+
+function _hideAllViews() {
+  ['home-view','session-view','alpha-view','lecture-view','reader-view']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
+
+function navGoHome() {
+  setActiveNav('nav-home');
+  _hideAllViews();
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('result-card').classList.remove('visible');
+  synth && synth.cancel();
+  renderLessonGrid(currentSubject);
+  updateReviewList();
+  refreshStickerBoard();
+}
+
+function goHome() { navGoHome(); }
+
+function openStatsView() {
+  setActiveNav('nav-stats');
+  navGoHome();
+}
+
+function updateReviewList() {
+  const el = document.getElementById('review-list');
+  if (!el) return;
+
+  // Leçons terminées triées par priorité SM-2 (plus tôt = plus urgent)
+  const done = [...student.done_lessons];
+  if (!done.length) { el.innerHTML = '<div style="text-align:center;color:#aaa;font-size:13px;padding:10px">Termine des leçons pour voir tes révisions ici !</div>'; return; }
+
+  const daysMap = [1, 3, 6, 12, 24]; // SM-2 simplifié en jours
+  el.innerHTML = done.slice(0, 5).map((lid, i) => {
+    const lesson = (typeof EXERCISES_DB !== 'undefined' && EXERCISES_DB.getLessonById) ? EXERCISES_DB.getLessonById(lid) : null;
+    const title = lesson ? lesson.title : lid;
+    const days = daysMap[Math.min(i, daysMap.length - 1)];
+    const urgent = days <= 1;
+    const label = urgent ? "Aujourd'hui" : `Dans ${days} jours`;
+    return `<div style="background:white;border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;box-shadow:0 3px 0 rgba(0,0,0,0.08);border:${urgent?'2px solid #FF6B6B':'2px solid transparent'};cursor:pointer" onclick="startSession('${lid}')">
+      <div style="width:36px;height:36px;border-radius:12px;background:${urgent?'#F8D7DA':'#E8F5E9'};display:flex;align-items:center;justify-content:center;font-size:18px">${urgent?'🔴':'✅'}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px;color:#1A1A2E">${title}</div>
+        <div style="font-size:11px;color:#888">${label}</div>
+      </div>
+      <div style="font-size:18px">🔊</div>
+    </div>`;
+  }).join('');
+}
+
+function reviewSpeak(title) {
+  if (voiceEnabled) speak('Révision : ' + title);
+}
+
+// ══════════════════════════════════════════════════
+// HIBOU AGENT — Assistant pédagogique intelligent
+// ══════════════════════════════════════════════════
+
+const HibouAgent = {
+  curriculum: {
+    lettre_t: {
+      title:"La lettre T", icon:"✏️",
+      explain:"La lettre T fait le son 't'.\nOn la trouve dans :\n• tata, tala, total, tu, tire, table",
+      rule:"Consonne + Voyelle = Syllabe\nT + A = 'ta'  •  T + I = 'ti'  •  T + O = 'to'",
+      examples:["✏️ Ta-ta → 2 syllabes","🍅 To-ma-te → 3 syllabes","🐢 Tor-tue → 2 syllabes"],
+      tips:["Pose la main sur la gorge, dis 't' : tu sens la vibration !","T est une consonne, A E I O U sont des voyelles"]
+    },
+    mots_outils: {
+      title:"Les articles", icon:"📝",
+      explain:"Les articles (le, la, l', les) s'appellent mots outils.\n• Devant un mot féminin → 'la'\n• Devant un mot masculin → 'le'\n• Devant une voyelle → 'l'' (apostrophe)",
+      rule:"Voyelle A E I O U → L'\nFéminin → La  •  Masculin → Le",
+      examples:["🍌 la banane (féminin)","🥭 le mango (masculin)","🍊 l'orange (commence par O)"],
+      tips:["L'apostrophe évite de dire 'le orange' — trop difficile à prononcer !","Essaie avec les fruits du marché"]
+    },
+    lettre_n: {
+      title:"La lettre N", icon:"🍌",
+      explain:"La lettre N fait le son 'n'.\n• N + A = 'na'\n• N + I = 'ni'\n• N + O = 'no'",
+      rule:"ba + na + ne = BANANE\nOn colle les syllabes pour former un mot !",
+      examples:["🍌 ba-na-ne (3 syllabes)","🐜 four-mi (2 syllabes)","🌙 lu-ne (2 syllabes)"],
+      tips:["Frappe dans tes mains pour chaque syllabe","ba(1) – na(2) – ne(3) → 3 coups !"]
+    },
+    phrase: {
+      title:"Les phrases", icon:"📖",
+      explain:"Une phrase commence par une MAJUSCULE et finit par un POINT.\n\nLe verbe ÊTRE :\nje suis / tu es / il-elle EST",
+      rule:"Sujet + Verbe être + Adjectif\nEx : Fèmi EST petite.",
+      examples:["👧 Fèmi est petite.","👦 Koffi est grand.","🌟 L'étoile est belle."],
+      tips:["'est' = verbe être (il/elle est)","'et' = pour relier deux choses : Koffi ET Fèmi"]
+    },
+    groupe_ou: {
+      title:"Le son OU", icon:"🐓",
+      explain:"Le groupe 'ou' fait le son 'ou' comme dans :\nboubou, pou, mou, sous, four, tour",
+      rule:"O + U ensemble = son 'ou'\nAttention : O seul = son 'o' (moto ≠ mouton)",
+      examples:["👘 bou-bou","🏙️ Ca-ri-bou","🍜 cou-cou"],
+      tips:["Arrondis bien ta bouche pour dire 'ou' !","'coco' vs 'coucou' — écoute la différence"]
+    },
+    addition: {
+      title:"L'addition", icon:"➕",
+      explain:"L'addition, c'est réunir des quantités ensemble.\n\n2 + 3 = 5\nOn lit : deux PLUS trois ÉGALE cinq",
+      rule:"Pour additionner :\n1. Lève les doigts du premier nombre\n2. Continue avec le deuxième\n3. Compte tout ensemble !",
+      examples:["✋ 2 + 3 = 5 (compte les doigts)","🥭 4 + 2 = 6 (4 mangues + 2 mangues)","🌟 5 + 5 = 10 (les deux mains !)"],
+      tips:["Utilise tes 10 doigts pour les additions jusqu'à 10 !","Quand les deux nombres sont pareils, on double : 4+4=8"]
+    },
+    comptage: {
+      title:"Compter", icon:"🔢",
+      explain:"Les nombres de 1 à 10 :\n1-2-3-4-5-6-7-8-9-10\n\nPour compter, on avance de 1 en 1.",
+      rule:"Après chaque nombre, on ajoute 1.\n7 → 8 → 9 → 10",
+      examples:["☝️ 1 doigt, ✌️ 2 doigts, 🤟 3 doigts...","⭐⭐⭐ = 3 étoiles","🔟 = dix, les deux mains !"],
+      tips:["Pour compter à rebours, on enlève 1 à chaque fois","Plus le nombre est grand, plus la quantité est grande : 8 > 5"]
+    },
+    lecture_syllabes: {
+      title:"Les syllabes", icon:"🗣️",
+      explain:"Une syllabe, c'est un morceau de mot.\nPour compter les syllabes, frappe dans tes mains !\n\nba-na-ne = 3 syllabes 👏👏👏",
+      rule:"Consonne + Voyelle = Syllabe\nba / na / ne / ma / pa / ta...",
+      examples:["🍌 ba-na-ne (3 syllabes)","👩 ma-man (2 syllabes)","🐱 chat (1 syllabe)"],
+      tips:["Frappe dans les mains pour chaque morceau !","Les mots courts ont souvent 1 syllabe : chat, pain, son"]
+    },
+  },
+
+  state:'idle', tipTimer:null, wrongStreak:0, lastTopic:'lettre_t',
+
+  setState(s) {
+    const el = document.getElementById('hibou-float');
+    if (!el) return;
+    el.className = 'hibou-float';
+    if (s !== 'idle') el.classList.add('hibou-' + s);
+    this.state = s;
+    if (s !== 'idle') setTimeout(() => { if (el) el.className='hibou-float'; this.state='idle'; }, 2200);
+  },
+
+  say(txt, dur=3800) {
+    const tip = document.getElementById('hibou-tip');
+    if (!tip) return;
+    clearTimeout(this.tipTimer);
+    tip.textContent = txt;
+    tip.classList.add('show');
+    this.tipTimer = setTimeout(() => tip.classList.remove('show'), dur);
+  },
+
+  onCorrect(ex, fast) {
+    this.wrongStreak = 0;
+    this.setState('happy');
+    const msgs = fast
+      ? ['Incroyable vitesse ! ⚡','Champion ! 🏆','Super rapide !']
+      : ['Excellent ! Bien joué ! ✅','Parfait ! Continue !','Tu progresses ! 🌟'];
+    this.say(msgs[Math.floor(Math.random()*msgs.length)], 2800);
+  },
+
+  onWrong(ex) {
+    this.wrongStreak++;
+    this.setState('thinking');
+    const curr = this.curriculum[ex.topic];
+    if (this.wrongStreak >= 2 && curr) {
+      this.say('Rappelle-toi :\n' + curr.rule.split('\n')[0] + '\nAppuie sur moi pour l\'explication 🦉', 5500);
+    } else {
+      this.say(['Pas grave, réessaie ! 💪','Écoute l\'explication 🎧','Chaque erreur = apprentissage !'][Math.floor(Math.random()*3)], 3000);
+    }
+  },
+
+  onTimeout() { this.say('Temps écoulé ! Appuie sur 🔊 pour réécouter la question 😊', 4000); },
+
+  onNewQuestion(ex) {
+    this.lastTopic = ex.topic;
+    const prob = raschProb(student.theta, ex.b);
+    if (prob < 0.35) { this.setState('thinking'); this.say('C\'est difficile ! Je suis là 🦉\nAppuie sur moi si besoin', 4000); }
+    else if (prob > 0.85) this.say('Facile pour toi ! Tu vas cartonner 😎', 2000);
+  },
+
+  openPanel(topic) {
+    const overlay = document.getElementById('agent-overlay');
+    overlay.classList.add('open');
+    this.buildPanel(topic || this.lastTopic);
+  },
+
+  buildPanel(topic) {
+    const tabs = document.getElementById('agent-tabs');
+    const content = document.getElementById('agent-content');
+    const keys = Object.keys(this.curriculum);
+    tabs.innerHTML = keys.map(k => {
+      const c = this.curriculum[k];
+      return `<button class="atab${k===topic?' active':''}" onclick="HibouAgent.switchTab('${k}',this)">${c.icon} ${c.title}</button>`;
+    }).join('');
+    this.renderTopic(topic, content);
+  },
+
+  switchTab(topic, btn) {
+    document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    this.renderTopic(topic, document.getElementById('agent-content'));
+  },
+
+  renderTopic(topic, el) {
+    const c = this.curriculum[topic];
+    if (!c) { el.innerHTML='<p>Sélectionne un thème !</p>'; return; }
+    el.innerHTML = `
+      <div class="a-explain">
+        <div class="a-explain-title">${c.icon} ${c.title}</div>
+        <div class="a-explain-body">${c.explain.replace(/\n/g,'<br>')}</div>
+      </div>
+      <div class="a-box">
+        <div class="a-box-label">📌 LA RÈGLE</div>
+        ${c.rule.replace(/\n/g,'<br>')}
+      </div>
+      <div class="a-box">
+        <div class="a-box-label">✨ EXEMPLES</div>
+        ${c.examples.map(e=>`<div style="margin-bottom:4px">${e}</div>`).join('')}
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:5px">CONSEILS DU HIBOU 💡</div>
+        ${c.tips.map(t=>`<span class="tip-pill">${t}</span>`).join('')}
+      </div>`;
+  }
+};
+
+function hibouClick() {
+  HibouAgent.openPanel(HibouAgent.lastTopic);
+}
+
+function closeAgentPanel(e) {
+  if (e && e.target !== document.getElementById('agent-overlay')) return;
+  document.getElementById('agent-overlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════
+// WEB AUDIO — Jingles générés sans fichier audio
+// ══════════════════════════════════════════════════
+
+let _audioCtx = null;
+function _getACtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _audioCtx;
+}
+function _note(ctx, freq, start, dur, type='sine', vol=0.22) {
+  try {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime + start);
+    g.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+    o.start(ctx.currentTime + start); o.stop(ctx.currentTime + start + dur + 0.05);
+  } catch(e) {}
+}
+function playJingle(type) {
+  try {
+    const ctx = _getACtx();
+    if (type === 'correct') {
+      [[523.25,0],[659.25,0.11],[783.99,0.22],[1046.50,0.33]].forEach(([f,t]) => _note(ctx,f,t,0.22));
+    } else if (type === 'wrong') {
+      _note(ctx, 180, 0, 0.38, 'sawtooth', 0.12);
+    } else if (type === 'star') {
+      [[523.25,0],[659.25,0.10],[783.99,0.20],[1046.50,0.30],[1318.51,0.42]].forEach(([f,t]) => _note(ctx,f,t,0.3,'triangle'));
+    } else if (type === 'trace') {
+      [[659.25,0],[880,0.14],[1046.50,0.28]].forEach(([f,t]) => _note(ctx,f,t,0.25));
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════
+// STICKERS — Récompenses visuelles béninoises
+// ══════════════════════════════════════════════════
+
+const STICKERS = [
+  {e:'🥭', n:"La mangue d'or",    d:'Pour avoir bien répondu !'},
+  {e:'🌴', n:'Le baobab fort',     d:'Solide comme un arbre !'},
+  {e:'🥁', n:'Le tam-tam',         d:'Ton rythme est parfait !'},
+  {e:'🦁', n:'Le lion courageux',  d:"Tu n'as pas eu peur !"},
+  {e:'🌺', n:'Fleur de Cotonou',   d:"Tu t'épanouis !"},
+  {e:'⚽', n:'Le ballon champion', d:'En plein dans le mille !'},
+  {e:'🐘', n:"L'éléphant sage",    d:'Bonne mémoire !'},
+  {e:'🌊', n:'La vague de Ouidah', d:'Tu avances bien !'},
+  {e:'🎋', n:'Le bambou fort',     d:'Tu grandis vite !'},
+  {e:'🏺', n:'Le canari de maman', d:'Précieux comme toi !'},
+  {e:'✨', n:"L'étoile brillante", d:'Tu brilles !'},
+  {e:'🎯', n:'La cible atteinte',  d:'Objectif accompli !'},
+];
+
+function earnSticker(pct) {
+  if (pct < 60) return;
+  const earned = new Set(student.stickers || []);
+  const avail = STICKERS.filter(s => !earned.has(s.e));
+  if (!avail.length) return;
+  const s = avail[Math.floor(Math.random() * avail.length)];
+  student.stickers = [...(student.stickers || []), s.e];
+  document.getElementById('sticker-big').textContent = s.e;
+  document.getElementById('sticker-name').textContent = s.n;
+  document.getElementById('sticker-desc').textContent = s.d;
+  document.getElementById('sticker-overlay').classList.add('show');
+  playJingle('star');
+  if (voiceEnabled) setTimeout(() => speak('Bravo ! Tu as gagné ' + s.n + ' !'), 400);
+  refreshStickerBoard();
+}
+
+function closeStickerOverlay() {
+  document.getElementById('sticker-overlay').classList.remove('show');
+}
+
+function refreshStickerBoard() {
+  const el = document.getElementById('sticker-board');
+  const sec = document.getElementById('stickers-section-title');
+  const stickers = student.stickers || [];
+  if (!stickers.length) { el.style.display='none'; sec.style.display='none'; return; }
+  el.style.display='flex'; sec.style.display='block';
+  el.innerHTML = stickers.map(e => `<div class="sticker-chip">${e}</div>`).join('');
+}
+
+function openStickerBoard() {
+  setActiveNav('nav-stickers');
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('alpha-view').style.display = 'none';
+  document.getElementById('session-view').style.display = 'none';
+  document.getElementById('sticker-board').scrollIntoView({behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════
+// KARAOKÉ SYLLABIQUE
+// ══════════════════════════════════════════════════
+
+function karaokify(text) {
+  return text.split(/(\s+)/).map(tok =>
+    /^\s+$/.test(tok) ? tok : `<span class="kara-w">${tok}</span>`
+  ).join('');
+}
+
+function triggerKaraoke(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const spans = [...el.querySelectorAll('.kara-w')];
+  if (!spans.length) return;
+  spans.forEach(s => s.classList.remove('k-on','k-done'));
+  let t = 0;
+  spans.forEach(span => {
+    const w = span.textContent.trim().replace(/[+?=.,!]/g,'');
+    const dur = w.length <= 2 ? 440 : w.length <= 4 ? 340 : w.length * 72;
+    setTimeout(() => {
+      spans.forEach(s => { if (s.classList.contains('k-on')) { s.classList.remove('k-on'); s.classList.add('k-done'); }});
+      span.classList.add('k-on');
+    }, t);
+    t += dur + 55;
+  });
+  setTimeout(() => spans.forEach(s => s.classList.remove('k-on','k-done')), t + 200);
+}
+
+// ══════════════════════════════════════════════════
+// MODE ALPHABET DU BÉNIN
+// ══════════════════════════════════════════════════
+
+const ALPHA_EX = {
+  a:{icon:'🍍',word:'Ananas',  syll:'a·na·nas'},
+  l:{icon:'🦁',word:'Lion',    syll:'li·on'},
+  t:{icon:'🍅',word:'Tomate',  syll:'to·ma·te'},
+  o:{icon:'🍊',word:'Orange',  syll:'o·ran·ge'},
+  p:{icon:'🥥',word:'Papaye',  syll:'pa·pa·ye'},
+  i:{icon:'🌿',word:'Igname',  syll:'i·gna·me'},
+  b:{icon:'🌳',word:'Baobab',  syll:'bao·bab'},
+  é:{icon:'📺',word:'Éléphant',syll:'é·lé·phant'},
+  m:{icon:'🥭',word:'Mango',   syll:'man·go'},
+  e:{icon:'⚽',word:'Enfant',  syll:'en·fant'},
+  d:{icon:'⏰',word:'Dodo',    syll:'do·do'},
+  u:{icon:'🎮',word:'Urubu',   syll:'u·ru·bu'},
+  n:{icon:'🍌',word:'Noix',    syll:'noix'},
+  s:{icon:'🥗',word:'Salade',  syll:'sa·la·de'},
+  f:{icon:'🍃',word:'Feuille', syll:'feuille'},
+  è:{icon:'👧',word:'Élève',   syll:'é·lè·ve'},
+  c:{icon:'🥥',word:'Coco',    syll:'co·co'},
+  r:{icon:'📻',word:'Radio',   syll:'ra·di·o'},
+  h:{icon:'🦉',word:'Hibou',   syll:'hi·bou'},
+};
+
+function openAlphaView() {
+  setActiveNav('nav-alpha');
+  _hideAllViews();
+  document.getElementById('alpha-view').style.display = 'block';
+  renderAlphaGrid();
+}
+
+function renderAlphaGrid() {
+  const grid = document.getElementById('alpha-grid');
+  if (!grid) return;
+  const lessons = (typeof EXERCISES_DB !== 'undefined')
+    ? EXERCISES_DB.getLessonsBySubject('francais').filter(l => l.topics && l.topics[0].startsWith('lettre_'))
+    : [];
+  grid.innerHTML = lessons.map(lesson => {
+    const topic = lesson.topics[0];
+    const raw = topic.replace('lettre_','');
+    const letter = raw === 'e_accent' ? 'é' : raw === 'e_grave' ? 'è' : raw;
+    const learned = (student.theta_by_topic[topic] ?? -3) > -1.8;
+    const ex = ALPHA_EX[letter] || {icon:'📚', word:letter.toUpperCase(), syll:letter};
+    return `<div class="alpha-card${learned?' alpha-ok':''}" onclick="openLetterDetail('${letter}','${lesson.id}')">
+      ${learned ? '<div class="alpha-ok-badge">✓</div>' : ''}
+      <div class="alpha-icon">${ex.icon}</div>
+      <div class="alpha-L">${letter.toUpperCase()}</div>
+      <div class="alpha-l">${letter.toLowerCase()}</div>
+      <div class="alpha-word">${ex.word}</div>
+    </div>`;
+  }).join('');
+}
+
+function openLetterDetail(letter, lessonId) {
+  const ex = ALPHA_EX[letter] || {icon:'📚', word:letter.toUpperCase(), syll:letter};
+  document.getElementById('alpha-detail-ltr').textContent = letter.toUpperCase() + letter.toLowerCase();
+  document.getElementById('alpha-detail-body').innerHTML = `
+    <div class="alpha-ex-row">
+      <div class="alpha-ex-icon">${ex.icon}</div>
+      <div class="alpha-ex-info">
+        <div class="alpha-ex-word">${ex.word}</div>
+        <div class="alpha-ex-syll">${ex.syll}</div>
+      </div>
+    </div>
+    <button class="alpha-action-btn" style="background:rgba(78,205,196,0.15);color:#085041" onclick="speak('${letter}. ${letter}. ${ex.word}.')">🔊 Écouter</button>
+    <button class="alpha-action-btn" style="background:rgba(255,230,109,0.4);color:var(--navy)" onclick="openTraceModal('${letter}');closeAlphaDetail()">✏️ Tracer la lettre</button>
+    <button class="alpha-action-btn" style="background:var(--sky);color:var(--navy)" onclick="closeAlphaDetail();navGoHome();startSession('${lessonId}')">▶ Pratiquer</button>`;
+  document.getElementById('alpha-detail').classList.add('show');
+  if (voiceEnabled) speak(letter + '. ' + letter + '. ' + ex.word + '.');
+}
+
+function closeAlphaDetail() {
+  document.getElementById('alpha-detail').classList.remove('show');
+}
+
+function setActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+// TRACÉ DE LETTRE — Canvas touch
+// ══════════════════════════════════════════════════
+
+let _traceState = null;
+
+function openTraceModal(letter) {
+  document.getElementById('trace-modal').classList.add('show');
+  document.getElementById('trace-title').textContent = 'Trace la lettre ' + letter.toUpperCase() + ' !';
+  _initTrace(letter);
+  if (voiceEnabled) speak('Trace la lettre ' + letter + ' avec ton doigt !');
+}
+
+function _initTrace(letter) {
+  const canvas = document.getElementById('trace-canvas');
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Dessiner le guide (lettre transparente)
+  ctx.font = 'bold 170px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(78,205,196,0.18)';
+  ctx.fillText(letter.toUpperCase(), W/2, H/2);
+  ctx.font = 'bold 70px sans-serif';
+  ctx.fillStyle = 'rgba(78,205,196,0.10)';
+  ctx.fillText(letter.toLowerCase(), W*0.80, H*0.75);
+
+  // Calculer les cellules cibles (grille 13×13)
+  const GRID = 13;
+  const cW = W/GRID, cH = H/GRID;
+  const img = ctx.getImageData(0, 0, W, H);
+  const targets = new Set();
+  for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) {
+    const px = Math.floor((c+0.5)*cW), py = Math.floor((r+0.5)*cH);
+    if (img.data[(py*W+px)*4+3] > 18) targets.add(r*GRID+c);
+  }
+
+  const drawn = new Set();
+  let drawing = false, lastPt = null;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x:(src.clientX-rect.left)*(W/rect.width), y:(src.clientY-rect.top)*(H/rect.height) };
+  }
+  function mark(x, y) {
+    const c=Math.floor(x/cW), r=Math.floor(y/cH);
+    [0,[-1,0],[1,0],[0,-1],[0,1]].forEach(d => {
+      const dc = Array.isArray(d)?d[0]:0, dr = Array.isArray(d)?d[1]:0;
+      const cc=c+dc, rr=r+dr;
+      if (cc>=0&&cc<GRID&&rr>=0&&rr<GRID) drawn.add(rr*GRID+cc);
+    });
+    _updateTraceProg(targets, drawn);
+  }
+  function stroke(x, y) {
+    ctx.beginPath();
+    if (lastPt) { ctx.moveTo(lastPt.x,lastPt.y); ctx.lineTo(x,y); }
+    else { ctx.arc(x,y,9,0,Math.PI*2); ctx.fill(); }
+    ctx.strokeStyle='rgba(78,205,196,0.75)'; ctx.lineWidth=20; ctx.lineCap='round'; ctx.stroke();
+    lastPt={x,y}; mark(x,y);
+  }
+
+  canvas.onmousedown=canvas.ontouchstart=(e)=>{e.preventDefault();drawing=true;lastPt=null;stroke(...Object.values(getPos(e)));};
+  canvas.onmousemove=canvas.ontouchmove=(e)=>{e.preventDefault();if(drawing)stroke(...Object.values(getPos(e)));};
+  canvas.onmouseup=canvas.ontouchend=(e)=>{e.preventDefault();drawing=false;lastPt=null;};
+  _traceState = {ctx, W, H, GRID, cW, cH, targets, drawn, letter};
+}
+
+function _updateTraceProg(targets, drawn) {
+  if (!targets.size) return;
+  const covered = [...targets].filter(c=>drawn.has(c)).length;
+  const pct = Math.round(100*covered/targets.size);
+  document.getElementById('trace-prog-fill').style.width = pct+'%';
+  if (pct >= 72) {
+    playJingle('trace');
+    HibouAgent.setState('happy');
+    HibouAgent.say('Superbe tracé ! 🎉', 2600);
+    if (voiceEnabled) speak('Bravo ! Belle lettre !');
+    setTimeout(closeTrace, 1800);
+  }
+}
+
+function clearTrace() {
+  if (!_traceState) return;
+  const {ctx,W,H,targets,drawn,letter} = _traceState;
+  drawn.clear(); ctx.clearRect(0,0,W,H);
+  document.getElementById('trace-prog-fill').style.width='0%';
+  ctx.font='bold 170px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(78,205,196,0.18)'; ctx.fillText(letter.toUpperCase(),W/2,H/2);
+  ctx.font='bold 70px sans-serif'; ctx.fillStyle='rgba(78,205,196,0.10)';
+  ctx.fillText(letter.toLowerCase(),W*0.80,H*0.75);
+}
+
+function closeTrace() {
+  document.getElementById('trace-modal').classList.remove('show');
+  _traceState = null;
+}
+
+// mascotSay conservé pour compatibilité
+function mascotSay(txt) { HibouAgent.say(txt, 3500); }
+function mascotSpeak() {
+  const msgs = ['Tu peux le faire ! 💪','Appuie sur 🔊 pour écouter !','Frappe dans tes mains pour compter les syllabes 👏','Chaque erreur t\'aide à progresser !','Appuie sur moi pour l\'explication 🦉'];
+  const txt = msgs[Math.floor(Math.random()*msgs.length)];
+  HibouAgent.say(txt, 3500);
+  if(voiceEnabled) speak(txt);
+}
+
+// Cacher l'accueil tant que le login n'est pas validé
+document.getElementById('home-view').style.display = 'none';
+
+// Activer le champ nom avec Enter
+document.getElementById('login-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const go = document.getElementById('login-go');
+    if (go.classList.contains('ready')) startApp();
+  }
+});
+
+// Charger les voix dès disponibles
+synth && synth.addEventListener && synth.addEventListener('voiceschanged', () => {});
+setTimeout(() => { if (synth) synth.getVoices(); }, 500);
+updateUI();
+
+// ══════════════════════════════════════════════════
+// BASE DE DONNÉES — LECTURES DÉCODABLES CP
+// Extraites du manuel "Décodable CP — DIIP Bénin 2022"
+// ══════════════════════════════════════════════════
+const LECTURES_DB = [
+  { id:"lec01", icon:"🍍", titre:"Leçon 1 — a, o, l", phonique:"a · o · l",
+    syllabes:["la","lu","li","al","ol","lo","il"],
+    mots:[{t:"lune",e:"🌙"},{t:"olive",e:"🫒"},{t:"Lola",e:"👧"},{t:"Ali",e:"👦"}],
+    texte:"Lola a une olive.",
+    questions:[{q:"Qu'a Lola ?",c:["une olive","une banane","une jupe"],ok:0}] },
+
+  { id:"lec02", icon:"🚗", titre:"Leçon 2 — le, la, l'", phonique:"le · la · l'",
+    syllabes:["le","la","l'","pa","ma"],
+    mots:[{t:"le papa",e:"👨"},{t:"la maman",e:"👩"},{t:"le vélo",e:"🚲"},{t:"la moto",e:"🛵"}],
+    texte:"Ali pédale le vélo. Il va à l'école. Papa est sur la moto.",
+    questions:[{q:"Où va Ali ?",c:["à l'école","au marché","à la fête"],ok:0},{q:"Qui est sur la moto ?",c:["papa","Lola","Ali"],ok:0}] },
+
+  { id:"lec03", icon:"👗", titre:"Leçon 3 — e, u, j", phonique:"e · u · j",
+    syllabes:["re","ju","jo","je","pa","pe"],
+    mots:[{t:"repas",e:"🍽️"},{t:"jupe",e:"👗"},{t:"joli",e:"✨"},{t:"jus",e:"🥤"}],
+    texte:"Lola a une jupe. Jules a un joli ludo.",
+    questions:[{q:"Qui a une jupe ?",c:["Lola","Jules","Toni"],ok:0}] },
+
+  { id:"lec04", icon:"📺", titre:"Leçon 4 — é, i, t", phonique:"é · i · t",
+    syllabes:["pi","li","té","ét","ta"],
+    mots:[{t:"épi",e:"🌾"},{t:"lit",e:"🛏️"},{t:"télé",e:"📺"},{t:"été",e:"☀️"}],
+    texte:"Toni a une télé. Il a allumé la télé. Il a vu un vélo à la télé.",
+    questions:[{q:"Qui a une télé ?",c:["Toni","Lola","Fèmi"],ok:0},{q:"Qu'a-t-il vu à la télé ?",c:["un vélo","un épi","une jupe"],ok:0}] },
+
+  { id:"lec05", icon:"🦴", titre:"Leçon 5 — è, ê", phonique:"è · ê",
+    syllabes:["lè","tê","lê","tè","fê"],
+    mots:[{t:"élève",e:"🎒"},{t:"tête",e:"🧠"},{t:"fête",e:"🎉"},{t:"têtu",e:"😤"}],
+    texte:"Toto est un élève. Il a un petit âne. Il tâte la tête de l'âne.",
+    questions:[{q:"Qui a un âne ?",c:["Toto","Ali","Lola"],ok:0},{q:"Qu'est Toto ?",c:["un élève","un papa","un ami"],ok:0}] },
+
+  { id:"lec06", icon:"🛵", titre:"Leçon 6 — m, n", phonique:"m · n",
+    syllabes:["mo","ni","ne","ma","né","mi"],
+    mots:[{t:"moto",e:"🛵"},{t:"nid",e:"🐣"},{t:"lune",e:"🌙"},{t:"ananas",e:"🍍"}],
+    texte:"Le papa de Toni a une moto. Il va à la ferme avec Toni. Papa donne un ananas à Toni.",
+    questions:[{q:"Que donne papa à Toni ?",c:["un ananas","une jupe","un vélo"],ok:0}] },
+
+  { id:"lec07", icon:"🍌", titre:"Leçon 7 — b, d", phonique:"b · d",
+    syllabes:["ba","dé","di","ab","do","bé"],
+    mots:[{t:"banane",e:"🍌"},{t:"dé",e:"🎲"},{t:"bébé",e:"👶"},{t:"midi",e:"🌞"}],
+    texte:"Lola a une banane et un dé. Elle donne la banane à Toni. Elle joue au dé avec Toni.",
+    questions:[{q:"Que donne Lola à Toni ?",c:["la banane","le dé","la jupe"],ok:0},{q:"Quel jeu font-ils ?",c:["le dé","le vélo","la télé"],ok:0}] },
+
+  { id:"lec08", icon:"🐓", titre:"Leçon 8 — p, q", phonique:"p · q",
+    syllabes:["pa","oq","pi","pè","ap","pe"],
+    mots:[{t:"patate",e:"🥔"},{t:"coq",e:"🐓"},{t:"pipe",e:"🪈"},{t:"piment",e:"🌶️"}],
+    texte:"Toni pile du mil. Le coq a vu le mil. Il picore et picore le mil.",
+    questions:[{q:"Qui picore le mil ?",c:["le coq","Toni","papa"],ok:0}] },
+
+  { id:"lec09", icon:"📻", titre:"Leçon 9 — s, r", phonique:"s · r",
+    syllabes:["sa","ra","si","ré","so","as"],
+    mots:[{t:"salade",e:"🥗"},{t:"radio",e:"📻"},{t:"samedi",e:"📅"},{t:"riz",e:"🍚"}],
+    texte:"Papa allume la radio. Toni est à côté de lui. Maman donne de la salade à Toni. Oh ! la salade est bonne, dit Toni.",
+    questions:[{q:"Que donne maman ?",c:["de la salade","du jus","une banane"],ok:0},{q:"Qui allume la radio ?",c:["papa","Toni","maman"],ok:0}] },
+
+  { id:"lec10", icon:"🚲", titre:"Leçon 10 — f, v", phonique:"f · v",
+    syllabes:["fê","vé","fa","vi","av","af"],
+    mots:[{t:"fête",e:"🎉"},{t:"vélo",e:"🚲"},{t:"farine",e:"🌾"},{t:"fonio",e:"🌾"}],
+    texte:"Fèmi a un vélo. Elle va à l'école. Elle pédale vite. À l'école, Fèmi a vu Lili. Fèmi jubile.",
+    questions:[{q:"Où va Fèmi ?",c:["à l'école","au marché","à la fête"],ok:0},{q:"Comment pédale-t-elle ?",c:["vite","doucement","lentement"],ok:0}] },
+
+  { id:"lec11", icon:"🥥", titre:"Leçon 11 — c, k", phonique:"c · k",
+    syllabes:["co","ké","cu","ka","oc","ca"],
+    mots:[{t:"coco",e:"🥥"},{t:"képi",e:"🎩"},{t:"cola",e:"🥤"},{t:"école",e:"🏫"}],
+    texte:"Toni va à l'école à vélo. Il porte un képi. À l'école, Toni lit et calcule.",
+    questions:[{q:"Que porte Toni ?",c:["un képi","une jupe","un sac"],ok:0}] },
+
+  { id:"lec12", icon:"🎸", titre:"Leçon 12 — g, gu", phonique:"g · gu",
+    syllabes:["ga","gui","guê","go","gué","ag"],
+    mots:[{t:"gari",e:"🍚"},{t:"guitare",e:"🎸"},{t:"guêpe",e:"🐝"},{t:"fagot",e:"🪵"}],
+    texte:"Fèmi porte une robe. Elle va à la fête avec une jolie guitare. Toni admire la guitare. Fèmi est ravie.",
+    questions:[{q:"Où va Fèmi ?",c:["à la fête","à l'école","au marché"],ok:0},{q:"Que porte Fèmi ?",c:["une robe","une jupe","un képi"],ok:0}] },
+
+  { id:"lec13", icon:"🦓", titre:"Leçon 13 — y, w, z", phonique:"y · w · z",
+    syllabes:["ye","wa","zé","yo","ya","zè"],
+    mots:[{t:"papaye",e:"🍈"},{t:"Wabi",e:"👦"},{t:"zébu",e:"🐄"},{t:"zoo",e:"🦁"}],
+    texte:"Wabi va au zoo. Il y a des zébus et des gazelles. Wabi donne de la papaye à un zébu. Le zébu se régale.",
+    questions:[{q:"Où va Wabi ?",c:["au zoo","à l'école","au marché"],ok:0},{q:"Que donne Wabi au zébu ?",c:["de la papaye","du mil","une banane"],ok:0}] },
+
+  { id:"lec14", icon:"🥁", titre:"Leçon 14 — Phrases", phonique:"Je reconnais une phrase",
+    syllabes:["Toni","Fèmi","Lili","Wabi","Ali"],
+    mots:[{t:"Fèmi bat le tam-tam.",e:"🥁"},{t:"Toni a un vélo.",e:"🚲"},{t:"Papa allume la télé.",e:"📺"}],
+    texte:"Toni porte un képi. Il a un joli sac et un vélo. Il pédale vite. Fèmi se lave et porte sa robe. Elle va à l'école. À l'école, elle lit.",
+    questions:[{q:"Que porte Toni sur la tête ?",c:["un képi","un chapeau","une robe"],ok:0},{q:"Où va Fèmi ?",c:["à l'école","au marché","à la fête"],ok:0}] },
+];
+
+// ══════════════════════════════════════════════════
+// MODE LECTURE — Fonctions
+// ══════════════════════════════════════════════════
+const student_read = {}; // { lecId: 'done'|'partial' }
+let _readerCurrent = null;
+let _readerStep = 0;  // 0=syllabes, 1=mots, 2=texte, 3=comprehension
+let _readerQIdx = 0;
+let _readerReadDone = false;
+const READER_STEPS = ['syllabes','mots','texte','compréhension'];
+
+function openLectureView() {
+  setActiveNav('nav-lecture');
+  _hideAllViews();
+  document.getElementById('lecture-view').style.display = 'block';
+  synth && synth.cancel();
+  _renderLecList();
+  if (voiceEnabled) setTimeout(() => speak('Bienvenue dans ton espace lecture ! Choisis une leçon.'), 400);
+}
+
+function _renderLecList() {
+  const list = document.getElementById('lec-list');
+  list.innerHTML = LECTURES_DB.map((lec, i) => {
+    const done = student_read[lec.id] === 'done';
+    const locked = i > 0 && !student_read[LECTURES_DB[i-1].id];
+    const imgSrc = (typeof LEC_IMAGES !== 'undefined' && LEC_IMAGES[lec.id]) ? LEC_IMAGES[lec.id] : null;
+    const thumb = imgSrc
+      ? `<img class="lec-thumb" src="${imgSrc}" alt="${lec.titre}">`
+      : `<div class="lec-icon">${lec.icon}</div>`;
+    return `<div class="lec-card${locked?' lec-locked':''}" onclick="${locked ? '' : 'openReader('+JSON.stringify(lec.id)+')'}">
+      ${thumb}
+      <div class="lec-info">
+        <div class="lec-name">${lec.titre}</div>
+        <div class="lec-phonics">${lec.phonique}</div>
+      </div>
+      <div>${done ? '<span class="lec-badge-done">✓ Lu</span>' : locked ? '<span class="lec-badge-lock">🔒</span>' : '<span class="lec-arrow">▶</span>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function openReader(lecId) {
+  _readerCurrent = LECTURES_DB.find(l => l.id === lecId);
+  if (!_readerCurrent) return;
+  _readerStep = 0;
+  _readerQIdx = 0;
+  _readerReadDone = false;
+  setActiveNav('nav-lecture');
+  _hideAllViews();
+  document.getElementById('reader-view').style.display = 'block';
+  document.getElementById('reader-title').textContent = _readerCurrent.titre;
+  document.getElementById('reader-next-btn').style.display = 'none';
+  _renderReaderStep();
+}
+
+function closeReader() {
+  synth && synth.cancel();
+  openLectureView();
+}
+
+function _renderReaderDots() {
+  const total = READER_STEPS.length;
+  document.getElementById('reader-dots').innerHTML = READER_STEPS.map((_, i) =>
+    `<div class="rd-dot ${i < _readerStep ? 'done' : i === _readerStep ? 'current' : ''}"></div>`
+  ).join('');
+}
+
+function _lecIllus(lec) {
+  const src = (typeof LEC_IMAGES !== 'undefined' && LEC_IMAGES[lec.id]) ? LEC_IMAGES[lec.id] : null;
+  return src ? `<img class="reader-illus" src="${src}" alt="${lec.titre}">` : '';
+}
+
+function _renderReaderStep() {
+  _renderReaderDots();
+  const lec = _readerCurrent;
+  const card = document.getElementById('reader-card');
+  const nextBtn = document.getElementById('reader-next-btn');
+  nextBtn.style.display = 'none';
+  nextBtn.textContent = _readerStep < READER_STEPS.length - 1 ? 'Continuer →' : 'Terminé ✓';
+
+  if (_readerStep === 0) {
+    // ── Syllabes ──
+    card.innerHTML = `
+      <div class="reader-step-label">🔤 Étape 1 : Les syllabes</div>
+      ${_lecIllus(lec)}
+      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Appuie sur chaque syllabe pour l'entendre</p>
+      <div class="syllabes-grid" id="syll-grid">
+        ${lec.syllabes.map((s,i)=>`<div class="syllabe-card" id="sc${i}" onclick="_heardSyllabe(${i},'${s}')">${s}</div>`).join('')}
+      </div>`;
+    if (voiceEnabled) setTimeout(() => speak('Écoute et répète chaque syllabe.'), 300);
+
+  } else if (_readerStep === 1) {
+    // ── Mots ──
+    card.innerHTML = `
+      <div class="reader-step-label">📝 Étape 2 : Les mots</div>
+      ${_lecIllus(lec)}
+      <p style="font-size:13px;color:#888;margin:0 0 14px;text-align:center">Touche chaque mot pour l'entendre</p>
+      <div class="mots-list">
+        ${lec.mots.map((m,i)=>`<div class="mot-item" id="mi${i}" onclick="_heardMot(${i},'${m.t.replace(/'/g,"\\'")}')">
+          <span class="mot-icon">${m.e}</span>
+          <span class="mot-text">${m.t}</span>
+          <span class="mot-speaker">🔊</span>
+        </div>`).join('')}
+      </div>`;
+    if (voiceEnabled) setTimeout(() => speak('Écoute chaque mot. Tu peux le répéter !'), 300);
+
+  } else if (_readerStep === 2) {
+    // ── Texte ──
+    const words = lec.texte.split(/\s+/).filter(Boolean);
+    const wordSpans = words.map((w,i) =>
+      `<span class="tx-word" id="tw${i}" onclick="_readWord(${i},'${w.replace(/['"]/g,'')}')">${w}</span> `
+    ).join('');
+    card.innerHTML = `
+      <div class="reader-step-label">📖 Étape 3 : Je lis le texte</div>
+      ${_lecIllus(lec)}
+      <button class="reader-listen-btn" onclick="_startTextKaraoke()">🔊 Écouter le texte</button>
+      <div class="texte-wrap" id="texte-wrap">${wordSpans}</div>`;
+    nextBtn.style.display = 'block';
+    if (voiceEnabled) setTimeout(() => speak('Appuie sur écouter pour que je lise le texte avec toi.'), 300);
+
+  } else if (_readerStep === 3) {
+    // ── Compréhension ──
+    _renderCompQuestion(lec, 0);
+    if (voiceEnabled) setTimeout(() => speak('Très bien ! Maintenant je te pose des questions sur le texte.'), 300);
+  }
+}
+
+function _heardSyllabe(i, syll) {
+  const card = document.getElementById('sc'+i);
+  if (card) card.classList.add('heard');
+  if (voiceEnabled) speak(syll);
+  else playJingle('correct');
+  const all = document.querySelectorAll('.syllabe-card');
+  const heard = document.querySelectorAll('.syllabe-card.heard');
+  if (heard.length >= Math.ceil(all.length * 0.7)) {
+    document.getElementById('reader-next-btn').style.display = 'block';
+  }
+}
+
+function _heardMot(i, mot) {
+  const el = document.getElementById('mi'+i);
+  if (el) el.classList.add('heard');
+  if (voiceEnabled) speak(mot);
+  else playJingle('correct');
+  const all = document.querySelectorAll('.mot-item');
+  const heard = document.querySelectorAll('.mot-item.heard');
+  if (heard.length >= all.length) {
+    document.getElementById('reader-next-btn').style.display = 'block';
+  }
+}
+
+let _karaokeActive = false;
+function _startTextKaraoke() {
+  if (_karaokeActive) { synth && synth.cancel(); _karaokeActive = false; return; }
+  _karaokeActive = true;
+  const lec = _readerCurrent;
+  const words = lec.texte.split(/\s+/).filter(Boolean);
+  let i = 0;
+  document.querySelectorAll('.tx-word').forEach(el => el.classList.remove('speaking','done'));
+
+  function speakNext() {
+    if (i >= words.length || !_karaokeActive) {
+      _karaokeActive = false;
+      document.querySelectorAll('.tx-word').forEach(el => { el.classList.remove('speaking'); el.classList.add('done'); });
+      document.getElementById('reader-next-btn').style.display = 'block';
+      return;
+    }
+    const wrd = words[i];
+    const el = document.getElementById('tw'+i);
+    document.querySelectorAll('.tx-word').forEach(e2 => e2.classList.remove('speaking'));
+    if (el) { el.classList.add('speaking'); el.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+    const utt = new SpeechSynthesisUtterance(wrd.replace(/[.!?,;]/g,''));
+    utt.lang='fr-FR'; utt.rate=0.75; utt.pitch=1.2;
+    utt.onend = () => { if (el) { el.classList.remove('speaking'); el.classList.add('done'); } i++; setTimeout(speakNext, 150); };
+    synth.speak(utt);
+  }
+  if (synth) { synth.cancel(); setTimeout(speakNext, 200); }
+}
+
+function _readWord(i, w) {
+  if (voiceEnabled) speak(w.replace(/[.!?,;]/g,''));
+}
+
+function _renderCompQuestion(lec, qIdx) {
+  _readerQIdx = qIdx;
+  const q = lec.questions[qIdx];
+  if (!q) { _readerFinish(); return; }
+  const card = document.getElementById('reader-card');
+  card.innerHTML = `
+    <div class="reader-step-label">💬 Étape 4 : Je comprends — Question ${qIdx+1}/${lec.questions.length}</div>
+    <div class="comp-question">${q.q}</div>
+    <div class="comp-choices">
+      ${q.c.map((c,i)=>`<button class="comp-btn" id="cb${i}" onclick="_ansComp(${i})">${c}</button>`).join('')}
+    </div>`;
+  if (voiceEnabled) setTimeout(() => speak(q.q), 400);
+}
+
+function _ansComp(chosen) {
+  const lec = _readerCurrent;
+  const q = lec.questions[_readerQIdx];
+  document.querySelectorAll('.comp-btn').forEach((b,i) => {
+    b.onclick = null;
+    if (i === q.ok) b.classList.add('correct');
+    else if (i === chosen) b.classList.add('wrong');
+  });
+  const correct = chosen === q.ok;
+  if (correct) {
+    playJingle('correct'); HibouAgent.setState('happy');
+    if (voiceEnabled) speak('Bravo ! C\'est la bonne réponse !');
+    student.xp += 10; student.session_correct++;
+  } else {
+    playJingle('wrong');
+    if (voiceEnabled) speak('Pas tout à fait. La bonne réponse est : ' + q.c[q.ok]);
+  }
+  student.session_total++;
+  updateUI();
+  const nextBtn = document.getElementById('reader-next-btn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = _readerQIdx + 1 < lec.questions.length ? 'Question suivante →' : 'Terminer la leçon ✓';
+}
+
+function readerNextStep() {
+  const lec = _readerCurrent;
+  synth && synth.cancel();
+  _karaokeActive = false;
+
+  if (_readerStep === 3) {
+    // Questions de compréhension — avancer d'une question ou finir
+    if (_readerQIdx + 1 < lec.questions.length) {
+      _renderCompQuestion(lec, _readerQIdx + 1);
+      document.getElementById('reader-next-btn').style.display = 'none';
+    } else {
+      _readerFinish();
+    }
+    return;
+  }
+  _readerStep++;
+  document.getElementById('reader-next-btn').style.display = 'none';
+  _renderReaderStep();
+}
+
+function _readerFinish() {
+  student_read[_readerCurrent.id] = 'done';
+  const pct = student.session_total > 0 ? Math.round(100 * student.session_correct / student.session_total) : 100;
+  const stars = pct >= 80 ? '⭐⭐⭐' : pct >= 50 ? '⭐⭐' : '⭐';
+  student.xp += 20;
+  earnSticker(pct);
+  updateUI();
+  playJingle('star');
+  HibouAgent.setState('happy');
+  const card = document.getElementById('reader-card');
+  card.innerHTML = `
+    <div class="reader-result">
+      <div class="reader-result-stars">${stars}</div>
+      <div class="reader-result-title">Bravo ${student.name || 'ami'} !</div>
+      <div class="reader-result-sub">Tu as lu la leçon : ${_readerCurrent.titre}</div>
+      <div style="font-size:13px;color:#888;margin:8px 0 20px">Score : ${pct}% · +20 XP 🎉</div>
+      <button onclick="openLectureView()" style="width:100%;padding:14px;background:var(--sky);color:var(--navy);border:none;border-radius:16px;font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:10px">📖 Prochaine leçon</button>
+      <button onclick="navGoHome()" style="width:100%;padding:12px;background:#F0F0F0;color:#555;border:none;border-radius:16px;font-family:'Baloo 2',cursive;font-size:15px;font-weight:700;cursor:pointer">🏠 Accueil</button>
+    </div>`;
+  document.getElementById('reader-next-btn').style.display = 'none';
+  if (voiceEnabled) speak('Félicitations ' + (student.name||'ami') + ' ! Tu as bien lu la leçon. ' + stars + ' !');
+}
+</script>
+</body>
+</html>
